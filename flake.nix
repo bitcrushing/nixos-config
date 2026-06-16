@@ -4,9 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     opencode-upstream.url = "github:anomalyco/opencode";
+    ghostty.url = "github:ghostty-org/ghostty";
   };
 
-  outputs = { self, nixpkgs, opencode-upstream, ... }@inputs:
+  outputs = { self, nixpkgs, opencode-upstream, ghostty, ... }@inputs:
     let
       system = "x86_64-linux";
 
@@ -21,6 +22,7 @@
 
     in {
       nixosConfigurations.nixPC = nixpkgs.lib.nixosSystem {
+        
         inherit system;
         specialArgs = { inherit inputs; };
 
@@ -31,9 +33,10 @@
             nixpkgs.overlays = [
             ( final: prev: {
               opencode = opencode-patched;
+              ghostty = ghostty.packages.${system}.default;
             }
             )
-            ];
+          ];
         }
       ];
     };

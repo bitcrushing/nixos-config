@@ -34,6 +34,7 @@
   };
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nixpkgs.config.allowUnfree = true;
 
   networking.hostName = "nixPC"; # Define your hostname.
 
@@ -67,6 +68,7 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
+  services.printing.drivers = [ pkgs.hplip ];
 
   # Enable sound.
   # services.pulseaudio.enable = true;
@@ -89,6 +91,12 @@
   };
 
   programs.firefox.enable = true;
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
+    localNetworkGameTransfers.openFirewall = true;
+  };
 
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
@@ -98,6 +106,22 @@
     git
     p7zip
     pkgs.opencode
+    pkgs.ghostty
+    discord
+    vlc
+    libreoffice
+    fastfetch
+    btop
+    qbittorrent
+    obs-studio
+    lutris
+    bottles
+    protonup-qt
+  ];
+
+  fonts.packages = with pkgs; [
+    corefonts
+    vista-fonts
   ];
 
   # Some programs need SUID wrappers, can be configured further or are

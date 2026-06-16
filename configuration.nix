@@ -56,6 +56,7 @@
   # };
 
   # Enable the X11 windowing system.
+  services.system76-scheduler.enable = true;
   services.xserver.enable = true;
   services.desktopManager.cosmic.enable = true;
   services.displayManager.cosmic-greeter.enable = true;
@@ -95,6 +96,7 @@
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
     git
+    p7zip
   ];
 
   # Some programs need SUID wrappers, can be configured further or are

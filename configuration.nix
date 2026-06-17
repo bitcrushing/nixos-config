@@ -56,11 +56,16 @@
   #   useXkbConfig = true; # use xkb.options in tty.
   # };
 
-  # Enable the X11 windowing system.
   services.system76-scheduler.enable = true;
   services.xserver.enable = true;
   services.desktopManager.cosmic.enable = true;
   services.displayManager.cosmic-greeter.enable = true;
+
+  # Disable USB autosuspend for Focusrite Scarlett 6i6 to prevent dropouts
+  services.udev.extraRules = ''
+    ATTR{idVendor}=="1235", ATTR{idProduct}=="8202", ATTR{power/control}="on"
+    ATTR{idVendor}=="1235", ATTR{idProduct}=="8203", ATTR{power/control}="on"
+  '';
 
   # Configure keymap in X11
   # services.xserver.xkb.layout = "us";
@@ -70,21 +75,43 @@
   services.printing.enable = true;
   services.printing.drivers = [ pkgs.hplip ];
 
-  # Enable sound.
-  # services.pulseaudio.enable = true;
-  # OR
+  # Enable low-latency professional audio via PipeWire.
+  security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
     pulse.enable = true;
+    jack.enable = true;
+    wireplumber.enable = true;
+    extraConfig.pipewire."10-lowlatency" = {
+      "context.properties" = {
+        "default.clock.rate" = 48000;
+        "default.clock.quantum" = 256;
+        "default.clock.min-quantum" = 128;
+        "default.clock.max-quantum" = 512;
+      };
+    };
   };
+  services.pipewire.wireplumber.configPackages = [
+    (pkgs.writeTextDir "share/wireplumber/main.lua.d/99-scarlett-profile.lua" ''
+      rule = {
+        matches = {
+          {
+            { "device.name", "matches", "alsa_card.usb-Focusrite_Scarlett_6i6_USB_00023256-00" },
+          },
+        },
+        apply_properties = {
+          ["device.profile"] = "output:analog-surround-50",
+        },
+      }
+    '')
+  ];
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.libinput.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
+  # Define a user account. Don't forget to set a password with 'passwd'.
   users.users.bitcrushing = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "networkmanager" "audio" "realtime" ]; # Enable 'sudo' for the user.
     packages = with pkgs; [
       tree
     ];
@@ -99,16 +126,17 @@
   };
 
   # List packages installed in system profile.
-  # You can use https://search.nixos.org/ to find more packages (and options).
+  # You can use https://search.nixos.org/ to search for packages and options.
   environment.systemPackages = with pkgs; [
-    vim
+    helix
     wget
     git
     p7zip
-    pkgs.opencode
-    pkgs.ghostty
+    opencode
+    ghostty
     discord
-    vlc
+    mpv
+    syncplay
     libreoffice
     fastfetch
     btop
@@ -117,6 +145,11 @@
     lutris
     bottles
     protonup-qt
+    qpwgraph
+    alsa-utils
+    qjackctl
+    pavucontrol
+    spotify-player
   ];
 
   fonts.packages = with pkgs; [
@@ -125,7 +158,7 @@
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
+  # configured in a following section.
   # programs.mtr.enable = true;
   # programs.gnupg.agent = {
   #   enable = true;
@@ -152,9 +185,9 @@
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
   #
   # Most users should NEVER change this value after the initial install, for any reason,
-  # even if you've upgraded your system to a new NixOS release.
+  # even if you have upgraded your system to a new NixOS release.
   #
-  # This value does NOT affect the Nixpkgs version your packages and OS are pulled from,
+  # This value does NOT affect the Nixpkgs version your OS is pulled from,
   # so changing it will NOT upgrade your system - see https://nixos.org/manual/nixos/stable/#sec-upgrading for how
   # to actually do that.
   #
@@ -168,4 +201,3 @@
   system.stateVersion = "26.05"; # Did you read the comment?
 
 }
-

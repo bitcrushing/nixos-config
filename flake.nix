@@ -5,9 +5,11 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     opencode-upstream.url = "github:anomalyco/opencode";
     ghostty.url = "github:ghostty-org/ghostty";
+    home-manager.url = "github:nix-community/home-manager";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, opencode-upstream, ghostty, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, opencode-upstream, ghostty, ... }@inputs:
     let
       system = "x86_64-linux";
 
@@ -38,6 +40,13 @@
             )
           ];
         }
+        
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.bitcrushing = import ./home.nix;
+          }
       ];
     };
   };

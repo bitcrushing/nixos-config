@@ -29,7 +29,7 @@
       RestartSec = 2;
       ExecStart = pkgs.writeShellScript "numpad-numlock-fix" ''
         # Tell the numpad (interface 0 = the boot-keyboard collection that owns the LED
-        # output report) that NumLock is ON. hidraw output report layout for this device:
+       # output report) that NumLock is ON. hidraw output report layout for this device:
         #   byte0 = report id (0 = none),  byte1 = LED bitmap (bit0 = NumLock).
         while :; do
           active=0
@@ -200,6 +200,7 @@
     qjackctl
     pavucontrol
     spotify-player
+    prismlauncher
   ];
 
   fonts.packages = with pkgs; [

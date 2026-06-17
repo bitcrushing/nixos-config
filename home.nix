@@ -12,7 +12,7 @@
     enable = true;
     defaultEditor = true;
     settings = {
-      theme = "tokyo_night";
+      theme = "base16_default";
       editor = {
         line-number = "relative";
         cursor-shape = {
@@ -41,17 +41,6 @@
         "C-j" = "jump_view_down";
         "C-k" = "jump_view_up";
         "C-l" = "jump_view_right";
-        space = {
-          f = "file_picker";
-          b = "buffer_picker";
-          "/" = "global_search";
-          y = ":clipboard-yank";
-          p = ":clipboard-paste-after";
-          P = ":clipboard-paste-before";
-          s = ":spell-check";
-          S = ":toggle-comments";
-          "?" = "command_palette";
-        };
       };
     };
     languages = {

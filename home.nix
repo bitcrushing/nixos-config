@@ -55,10 +55,9 @@
 
   programs.git = {
     enable = true;
-    # TODO: set these to your real identity for commit authorship.
     settings.user = {
       name = "bitcrushing";
-      email = "bitcrushing@example.com";
+      email = "kakodaemon@protonmail.com";
     };
   };
 

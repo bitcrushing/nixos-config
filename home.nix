@@ -7,7 +7,13 @@
   home.stateVersion = "26.05";
 
   programs.home-manager.enable = true;
-  programs.bash.enable = true;
+  programs.bash = {
+    enable = true;
+    shellAliases = {
+      nrs = "sudo nixos-rebuild switch --flake ~/nixos#PC";
+      nrb = "nixos-rebuild build --flake ~/nixos#PC";
+    };
+  };
   
   home.sessionVariables = {
     SUDO_EDITOR = "hx";

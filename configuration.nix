@@ -183,7 +183,6 @@
     git
     p7zip
     opencode
-    ghostty
     discord
     mpv
     syncplay
@@ -201,7 +200,7 @@
     pavucontrol
     spotify-player
     prismlauncher
-  ];
+ ];
 
   fonts.packages = with pkgs; [
     corefonts

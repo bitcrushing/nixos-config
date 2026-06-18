@@ -8,11 +8,24 @@
 
   programs.home-manager.enable = true;
 
+  programs.ghostty = {
+  enable = true;
+  package = pkgs.ghostty;
+  settings = {
+    theme = "Abernathy";
+    background-opacity = "0.95";
+    font-family = "monospace";
+    font-size = 12;
+    cursor-style = "block";
+    cursor-style-blink = false;
+    };
+  };
+  
   programs.helix = {
     enable = true;
     defaultEditor = true;
     settings = {
-      theme = "base16_default";
+      theme = "base16_default_dark";
       editor = {
         line-number = "relative";
         cursor-shape = {

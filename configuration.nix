@@ -86,7 +86,7 @@
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true;
 
-  networking.hostName = "nixPC"; # Define your hostname.
+  networking.hostName = "PC"; # Define your hostname.
 
   # Configure network connections interactively with nmcli or nmtui.
   networking.networkmanager.enable = true;
@@ -162,9 +162,6 @@
   users.users.bitcrushing = {
     isNormalUser = true;
     extraGroups = [ "wheel" "networkmanager" "audio" "realtime" ]; # Enable 'sudo' for the user.
-    packages = with pkgs; [
-      tree
-    ];
   };
 
   programs.firefox.enable = true;
@@ -175,32 +172,16 @@
     localNetworkGameTransfers.openFirewall = true;
   };
 
+  security.sudo.extraConfig = ''
+    Defaults env_editor
+  '';
+
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to search for packages and options.
   environment.systemPackages = with pkgs; [
-    helix
-    wget
-    git
-    p7zip
-    opencode
-    discord
-    mpv
-    syncplay
-    libreoffice
-    fastfetch
-    btop
-    qbittorrent
-    obs-studio
-    lutris
-    bottles
-    protonup-qt
-    qpwgraph
+    # System-level audio utilities (tied to the PipeWire/JACK setup below).
     alsa-utils
-    qjackctl
-    pavucontrol
-    spotify-player
-    prismlauncher
- ];
+  ];
 
   fonts.packages = with pkgs; [
     corefonts

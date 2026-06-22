@@ -57,6 +57,9 @@
     taplo                # toml LSP + formatter
     yaml-language-server # yaml LSP
     marksman             # markdown LSP
+
+    # Custom packages
+    (pkgs.callPackage ./pkgs/pipeasio {})
   ];
 
   programs.git = {

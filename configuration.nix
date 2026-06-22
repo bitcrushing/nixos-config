@@ -111,6 +111,58 @@
   services.desktopManager.cosmic.enable = true;
   services.displayManager.cosmic-greeter.enable = true;
 
+  # COSMIC's built-in screenshot tool misaligns captures when the desktop
+  # spans multiple outputs that are not aligned along a clean rectangle
+  # (e.g. one display offset vertically). Declaratively aligning the two
+  # AOC 2481W displays at the top edge removes the irregular desktop shape
+  # and makes spanning screenshots line up correctly.
+  # Revert to `position 1920 97` below if you prefer the previous vertical
+  # offset, but note that COSMIC screenshots spanning both screens will be
+  # offset again in that case. As an alternative, use grim+slurp (installed
+  # in environment.systemPackages) which handles arbitrary layouts correctly.
+  # See: https://github.com/pop-os/cosmic-screenshot/issues/5
+  environment.etc."cosmic-randr/monitors.kdl".text = ''
+    output "HDMI-A-1" enabled=#true {
+      description make="PNP(AOC)" model="2481W"
+      position 0 0
+      scale 1.00
+      transform "normal"
+      modes {
+        mode 1920 1080 60000 current=#true preferred=#true
+      }
+    }
+    output "HDMI-A-2" enabled=#true {
+      description make="PNP(AOC)" model="2481W"
+      position 1920 0
+      scale 1.00
+      transform "normal"
+      modes {
+        mode 1920 1080 60000 current=#true preferred=#true
+      }
+    }
+  '';
+
+  systemd.user.services.cosmic-randr-apply = {
+    description = "Apply declarative COSMIC monitor layout";
+    after = [ "cosmic-session.target" ];
+    wantedBy = [ "cosmic-session.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "apply-cosmic-randr" ''
+        export PATH="${lib.makeBinPath [ pkgs.cosmic-randr pkgs.coreutils ]}:$PATH"
+        for i in $(seq 1 30); do
+          if cosmic-randr list >/dev/null 2>&1; then
+            exec cosmic-randr kdl < /etc/cosmic-randr/monitors.kdl
+          fi
+          sleep 1
+        done
+        echo "cosmic-randr not available, could not apply monitor layout" >&2
+        exit 1
+      '';
+    };
+  };
+
   # Disable USB autosuspend for Focusrite Scarlett 6i6 & numpad to prevent dropouts
   services.udev.extraRules = ''
     ATTR{idVendor}=="1235", ATTR{idProduct}=="8202", ATTR{power/control}="on"
@@ -181,6 +233,12 @@
   environment.systemPackages = with pkgs; [
     # System-level audio utilities (tied to the PipeWire/JACK setup below).
     alsa-utils
+
+    # Fallback screenshot tools that handle arbitrary multi-monitor layouts
+    # correctly on Wayland, unlike COSMIC's built-in screenshot utility.
+    grim
+    slurp
+    wl-clipboard
   ];
 
   fonts.packages = with pkgs; [

@@ -2,13 +2,18 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -28,22 +33,22 @@
       Restart = "always";
       RestartSec = 2;
       ExecStart = pkgs.writeShellScript "numpad-numlock-fix" ''
-        # Tell the numpad (interface 0 = the boot-keyboard collection that owns the LED
-       # output report) that NumLock is ON. hidraw output report layout for this device:
-        #   byte0 = report id (0 = none),  byte1 = LED bitmap (bit0 = NumLock).
-        while :; do
-          active=0
-          for d in /sys/class/hidraw/hidraw*; do
-            [ -e "$d/device/uevent" ] || continue
-            ue=$(< "$d/device/uevent")
-            case "$ue" in *0003:00000C45:00007018*) ;; *) continue ;; esac
-            ifn=$(< "$d/device/../bInterfaceNumber")
-            [ "$ifn" = "00" ] || continue
-            printf '\000\001' > "/dev/''${d##*/}" 2>/dev/null || true
-            active=1
-          done
-          if [ "$active" = 1 ]; then sleep 0.25; else sleep 2; fi
-        done
+         # Tell the numpad (interface 0 = the boot-keyboard collection that owns the LED
+        # output report) that NumLock is ON. hidraw output report layout for this device:
+         #   byte0 = report id (0 = none),  byte1 = LED bitmap (bit0 = NumLock).
+         while :; do
+           active=0
+           for d in /sys/class/hidraw/hidraw*; do
+             [ -e "$d/device/uevent" ] || continue
+             ue=$(< "$d/device/uevent")
+             case "$ue" in *0003:00000C45:00007018*) ;; *) continue ;; esac
+             ifn=$(< "$d/device/../bInterfaceNumber")
+             [ "$ifn" = "00" ] || continue
+             printf '\000\001' > "/dev/''${d##*/}" 2>/dev/null || true
+             active=1
+           done
+           if [ "$active" = 1 ]; then sleep 0.25; else sleep 2; fi
+         done
       '';
     };
   };
@@ -62,8 +67,8 @@
      KEYBOARD_KEY_70062=0
      KEYBOARD_KEY_70063=dot
      KEYBOARD_KEY_70053=reserved
-   '';
-   
+  '';
+
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.supportedFilesystems = [ "bcachefs" ];
@@ -83,7 +88,10 @@
     timerConfig.onCalendar = "weekly";
   };
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
   nixpkgs.config.allowUnfree = true;
 
   networking.hostName = "PC"; # Define your hostname.
@@ -150,7 +158,12 @@
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = pkgs.writeShellScript "apply-cosmic-randr" ''
-        export PATH="${lib.makeBinPath [ pkgs.cosmic-randr pkgs.coreutils ]}:$PATH"
+        export PATH="${
+          lib.makeBinPath [
+            pkgs.cosmic-randr
+            pkgs.coreutils
+          ]
+        }:$PATH"
         for i in $(seq 1 30); do
           if cosmic-randr list >/dev/null 2>&1; then
             exec cosmic-randr kdl < /etc/cosmic-randr/monitors.kdl
@@ -188,10 +201,10 @@
     wireplumber.enable = true;
     extraConfig.pipewire."10-lowlatency" = {
       "context.properties" = {
-        "default.clock.rate" = 48000;
+        "default.clock.rate" = 44100;
         "default.clock.quantum" = 256;
-        "default.clock.min-quantum" = 128;
-        "default.clock.max-quantum" = 512;
+        "default.clock.min-quantum" = 256;
+        "default.clock.max-quantum" = 256;
       };
     };
   };
@@ -213,7 +226,12 @@
   # Define a user account. Don't forget to set a password with 'passwd'.
   users.users.bitcrushing = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "audio" "realtime" ]; # Enable 'sudo' for the user.
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "audio"
+      "realtime"
+    ]; # Enable 'sudo' for the user.
   };
 
   programs.firefox.enable = true;

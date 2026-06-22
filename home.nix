@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   home.username = "bitcrushing";
@@ -76,7 +76,15 @@
 
   programs.obs-studio.enable = true;
 
-  
+  # PipeASIO's Wine/Proton loader needs the ELF .so half to live under $HOME
+  # (the Proton container exposes home by default, but may not expose /nix/store).
+  # Keep a local copy updated on every home-manager activation.
+  home.activation.pipeasioLocalWine = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD mkdir -p $HOME/.local/lib/wine/x86_64-unix $HOME/.local/lib/wine/x86_64-windows
+    $DRY_RUN_CMD cp -Lf --no-preserve=mode ${pkgs.callPackage ./pkgs/pipeasio {}}/lib/wine/x86_64-unix/* $HOME/.local/lib/wine/x86_64-unix/
+    $DRY_RUN_CMD cp -Lf --no-preserve=mode ${pkgs.callPackage ./pkgs/pipeasio {}}/lib/wine/x86_64-windows/* $HOME/.local/lib/wine/x86_64-windows/
+  '';
+
   programs.ghostty = {
     enable = true;
     settings = {

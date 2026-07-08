@@ -1,9 +1,4 @@
-# Edit this configuration file to define what should be installed on
-# your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
-
 {
-  config,
   lib,
   pkgs,
   ...
@@ -13,6 +8,7 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    ./theme.nix
   ];
 
   # Use the systemd-boot EFI boot loader.
@@ -92,6 +88,7 @@
     "nix-command"
     "flakes"
   ];
+
   nixpkgs.config.allowUnfree = true;
 
   networking.hostName = "PC"; # Define your hostname.
@@ -102,33 +99,13 @@
   # Set your time zone.
   time.timeZone = "Europe/Dublin";
 
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Select internationalisation properties.
-  # i18n.defaultLocale = "en_US.UTF-8";
-  # console = {
-  #   font = "Lat2-Terminus16";
-  #   keyMap = "us";
-  #   useXkbConfig = true; # use xkb.options in tty.
-  # };
-
+  # Desktop environment
   services.system76-scheduler.enable = true;
   services.xserver.enable = true;
   services.desktopManager.cosmic.enable = true;
   services.displayManager.cosmic-greeter.enable = true;
 
-  # COSMIC's built-in screenshot tool misaligns captures when the desktop
-  # spans multiple outputs that are not aligned along a clean rectangle
-  # (e.g. one display offset vertically). Declaratively aligning the two
-  # AOC 2481W displays at the top edge removes the irregular desktop shape
-  # and makes spanning screenshots line up correctly.
-  # Revert to `position 1920 97` below if you prefer the previous vertical
-  # offset, but note that COSMIC screenshots spanning both screens will be
-  # offset again in that case. As an alternative, use grim+slurp (installed
-  # in environment.systemPackages) which handles arbitrary layouts correctly.
-  # See: https://github.com/pop-os/cosmic-screenshot/issues/5
+  # Make COSMIC screenshots align when taking two screen-spanning screenshots
   environment.etc."cosmic-randr/monitors.kdl".text = ''
     output "HDMI-A-1" enabled=#true {
       description make="PNP(AOC)" model="2481W"
@@ -182,10 +159,6 @@
     ATTR{idVendor}=="1235", ATTR{idProduct}=="8203", ATTR{power/control}="on"
   '';
 
-  # Configure keymap in X11
-  # services.xserver.xkb.layout = "us";
-  # services.xserver.xkb.options = "eurosign:e,caps:escape";
-
   # Enable CUPS to print documents.
   services.printing.enable = true;
   services.printing.drivers = [ pkgs.hplip ];
@@ -231,10 +204,10 @@
       "networkmanager"
       "audio"
       "realtime"
-    ]; # Enable 'sudo' for the user.
+      "gamemode"
+    ];
   };
 
-  programs.firefox.enable = true;
   programs.steam = {
     enable = true;
     remotePlay.openFirewall = true;
@@ -242,51 +215,23 @@
     localNetworkGameTransfers.openFirewall = true;
   };
 
+  # Core pinning, managed in home.nix
+  programs.gamemode.enable = true;
+
   security.sudo.extraConfig = ''
     Defaults env_editor
   '';
 
-  # List packages installed in system profile.
-  # You can use https://search.nixos.org/ to search for packages and options.
+  # System-level extra packages
   environment.systemPackages = with pkgs; [
-    # System-level audio utilities (tied to the PipeWire/JACK setup below).
-    alsa-utils
-
-    # Fallback screenshot tools that handle arbitrary multi-monitor layouts
-    # correctly on Wayland, unlike COSMIC's built-in screenshot utility.
-    grim
-    slurp
     wl-clipboard
   ];
 
   fonts.packages = with pkgs; [
     corefonts
     vista-fonts
+    nerd-fonts.victor-mono
   ];
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # configured in a following section.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  # system.copySystemConfiguration = true;
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.

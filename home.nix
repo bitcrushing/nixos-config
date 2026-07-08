@@ -1,6 +1,12 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
+
   home.username = "bitcrushing";
   home.homeDirectory = "/home/bitcrushing";
 
@@ -12,9 +18,10 @@
     shellAliases = {
       nrs = "sudo nixos-rebuild switch --flake ~/nixos#PC";
       nrb = "nixos-rebuild build --flake ~/nixos#PC";
+      nrt = "sudo nixos-rebuild test --flake ~/nixos#PC";
     };
   };
-  
+
   home.sessionVariables = {
     SUDO_EDITOR = "hx";
     EDITOR = "hx";
@@ -35,32 +42,49 @@
     qbittorrent
     spotify-player
 
-    # Gaming
+    # Games
     lutris
     bottles
     protonup-qt
     prismlauncher
+    vulkan-tools
 
-    # Audio tooling (GUIs)
+    # Audio
+    renoise
     qpwgraph
     qjackctl
     pavucontrol
 
-    # Language servers & formatters for Helix
-    nil                  # nix LSP
-    nixfmt               # provides the `nixfmt` binary (RFC-style)
-    rust-analyzer        # rust LSP
-    ruff                 # python lint + format
+    # Devenv, LSPs, formatters
+    devenv
+    nil # Nix LSP
+    nixfmt
+    rust-analyzer # Rust LSP
+    ruff # Python lint + format
     typescript-language-server
     prettier
-    vscode-langservers-extracted   # json/html/css LSP
-    taplo                # toml LSP + formatter
-    yaml-language-server # yaml LSP
-    marksman             # markdown LSP
+    vscode-langservers-extracted # JSON/HTML/CSS LSP
+    taplo # TOML LSP + formatter
+    yaml-language-server # YAML LSP
+    marksman # Markdown LSP
 
     # Custom packages
-    (pkgs.callPackage ./pkgs/pipeasio {})
+    (pkgs.callPackage ./pkgs/pipeasio { })
   ];
+
+  # GameMode settings. The daemon is enabled at system level
+  # programs.gamemode.enable in configuration.nix
+  # Schema: https://github.com/FeralInteractive/gamemode/blob/master/example/gamemode.ini
+  xdg.configFile."gamemode.ini".text = ''
+    [general]
+    reaper_freq=5
+    desiredgov=performance
+    inhibit_screensaver=1
+    disable_splitlock=1
+
+    [cpu]
+    pin_cores=0-5,12-17
+  '';
 
   programs.git = {
     enable = true;
@@ -79,40 +103,25 @@
   # PipeASIO's Wine/Proton loader needs the ELF .so half to live under $HOME
   # (the Proton container exposes home by default, but may not expose /nix/store).
   # Keep a local copy updated on every home-manager activation.
+  # Also symlink the nix PipeWire lib so LD_PRELOAD can override the container's
+  # ancient libpipewire-0.3 (steamrt ships 0.3.27; PipeASIO needs pw_data_loop_set_thread_utils).
   home.activation.pipeasioLocalWine = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD mkdir -p $HOME/.local/lib/wine/x86_64-unix $HOME/.local/lib/wine/x86_64-windows
-    $DRY_RUN_CMD cp -Lf --no-preserve=mode ${pkgs.callPackage ./pkgs/pipeasio {}}/lib/wine/x86_64-unix/* $HOME/.local/lib/wine/x86_64-unix/
-    $DRY_RUN_CMD cp -Lf --no-preserve=mode ${pkgs.callPackage ./pkgs/pipeasio {}}/lib/wine/x86_64-windows/* $HOME/.local/lib/wine/x86_64-windows/
+    $DRY_RUN_CMD cp -Lf --no-preserve=mode ${
+      pkgs.callPackage ./pkgs/pipeasio { }
+    }/lib/wine/x86_64-unix/* $HOME/.local/lib/wine/x86_64-unix/
+    $DRY_RUN_CMD cp -Lf --no-preserve=mode ${
+      pkgs.callPackage ./pkgs/pipeasio { }
+    }/lib/wine/x86_64-windows/* $HOME/.local/lib/wine/x86_64-windows/
+    $DRY_RUN_CMD ln -sfn ${lib.getLib pkgs.pipewire}/lib $HOME/.local/lib/pipewire
   '';
 
-  programs.ghostty = {
-    enable = true;
-    settings = {
-      # base16 default dark (matches helix base16_default_dark)
-      background = "181818";
-      foreground = "d8d8d8";
-      cursor-color = "d8d8d8";
-      selection-background = "383838";
-      selection-foreground = "d8d8d8";
-      palette = [
-        "0=#181818"  "1=#ab4642"  "2=#a1b56c"  "3=#f7ca88"
-        "4=#7cafc2"  "5=#ba8baf"  "6=#86c1b9"  "7=#d8d8d8"
-        "8=#585858"  "9=#ab4642"  "10=#a1b56c" "11=#f7ca88"
-        "12=#7cafc2" "13=#ba8baf" "14=#86c1b9" "15=#f8f8f8"
-      ];
-      background-opacity = "0.95";
-      font-family = "monospace";
-      font-size = 12;
-      cursor-style = "block";
-      cursor-style-blink = false;
-    };
-  };
-  
+  programs.ghostty.enable = true;
+
   programs.helix = {
     enable = true;
     defaultEditor = true;
     settings = {
-      theme = "base16_default_dark";
       editor = {
         line-number = "relative";
         cursor-shape = {
@@ -151,7 +160,9 @@
         {
           name = "nix";
           auto-format = true;
-          formatter = { command = "nixfmt"; };
+          formatter = {
+            command = "nixfmt";
+          };
           language-servers = [ "nil" ];
         }
         {

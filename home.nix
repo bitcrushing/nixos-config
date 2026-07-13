@@ -34,6 +34,8 @@
     tree
     fastfetch
     opencode
+    scrcpy
+    android-tools
 
     # Desktop apps
     discord
@@ -41,13 +43,17 @@
     libreoffice
     qbittorrent
     spotify-player
+    obsidian
 
     # Games
     lutris
     bottles
     protonup-qt
+    protontricks
     prismlauncher
     vulkan-tools
+    opentrack
+    aitrack
 
     # Audio
     renoise
@@ -71,20 +77,6 @@
     # Custom packages
     (pkgs.callPackage ./pkgs/pipeasio { })
   ];
-
-  # GameMode settings. The daemon is enabled at system level
-  # programs.gamemode.enable in configuration.nix
-  # Schema: https://github.com/FeralInteractive/gamemode/blob/master/example/gamemode.ini
-  xdg.configFile."gamemode.ini".text = ''
-    [general]
-    reaper_freq=5
-    desiredgov=performance
-    inhibit_screensaver=1
-    disable_splitlock=1
-
-    [cpu]
-    pin_cores=0-5,12-17
-  '';
 
   programs.git = {
     enable = true;

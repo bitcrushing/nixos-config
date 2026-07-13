@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -19,6 +20,7 @@
   boot.kernelParams = [ "usbhid.quirks=0x0c45:0x7018:0x00010000" ];
   boot.extraModprobeConfig = ''
     options usbhid quirks=0x0c45:0x7018:0x00010000
+    options v4l2loopback devices=1 video_nr=10 card_label="PixelCam" exclusive_caps=1
   '';
 
   systemd.services.numpad-numlock-fix = {
@@ -91,6 +93,34 @@
 
   nixpkgs.config.allowUnfree = true;
 
+  # Wrap cosmic-comp with a custom fontconfig so window title bars use
+  # VictorMono without affecting Firefox or other apps.
+  nixpkgs.overlays = [
+    (_final: prev: {
+      cosmic-comp = prev.symlinkJoin {
+        name = "cosmic-comp-wrapped";
+        paths = [ prev.cosmic-comp ];
+        buildInputs = [ prev.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/cosmic-comp \
+            --set FONTCONFIG_FILE ${prev.writeText "cosmic-fontconfig.conf" ''
+              <?xml version="1.0"?>
+              <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+              <fontconfig>
+                <include ignore_missing="yes">/etc/fonts/fonts.conf</include>
+                <match target="pattern">
+                  <test name="family"><string>sans-serif</string></test>
+                  <edit name="family" mode="prepend" binding="strong">
+                    <string>VictorMono Nerd Font</string>
+                  </edit>
+                </match>
+              </fontconfig>
+            ''}
+        '';
+      };
+    })
+  ];
+
   networking.hostName = "PC"; # Define your hostname.
 
   # Configure network connections interactively with nmcli or nmtui.
@@ -99,11 +129,30 @@
   # Set your time zone.
   time.timeZone = "Europe/Dublin";
 
-  # Desktop environment
+  # COSMIC kept installed as a login fallback; the daily driver is now Niri.
   services.system76-scheduler.enable = true;
-  services.xserver.enable = true;
+  services.xserver.enable = true; # XWayland for X11 apps under Niri
   services.desktopManager.cosmic.enable = true;
-  services.displayManager.cosmic-greeter.enable = true;
+  programs.niri.enable = true;
+
+  # Greetd login setup
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd niri-session";
+        user = "greeter";
+      };
+    };
+  };
+  # Let niri-session import the full user PATH (incl. home-manager bins)
+  systemd.user.services.niri.enableDefaultPath = false;
+
+  # Screen sharing, file picker
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  };
 
   # Make COSMIC screenshots align when taking two screen-spanning screenshots
   environment.etc."cosmic-randr/monitors.kdl".text = ''
@@ -163,7 +212,7 @@
   services.printing.enable = true;
   services.printing.drivers = [ pkgs.hplip ];
 
-  # Enable low-latency professional audio via PipeWire.
+  # Enable low-latency audio via PipeWire.
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -204,7 +253,6 @@
       "networkmanager"
       "audio"
       "realtime"
-      "gamemode"
     ];
   };
 
@@ -214,9 +262,17 @@
     dedicatedServer.openFirewall = true;
     localNetworkGameTransfers.openFirewall = true;
   };
+  hardware.steam-hardware.enable = true;
 
-  # Core pinning, managed in home.nix
-  programs.gamemode.enable = true;
+  boot.extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
+  boot.kernelModules = [ "v4l2loopback" ];
+
+  # Process scheduler optimisations (replaces GameMode)
+  services.ananicy = {
+    enable = true;
+    package = pkgs.ananicy-cpp;
+    rulesProvider = pkgs.ananicy-rules-cachyos;
+  };
 
   security.sudo.extraConfig = ''
     Defaults env_editor
@@ -225,6 +281,17 @@
   # System-level extra packages
   environment.systemPackages = with pkgs; [
     wl-clipboard
+
+    # Niri Wayland extensions
+    waybar
+    mako
+    swaylock
+    fuzzel
+    swaybg
+    libnotify
+
+    # X11 apps under Niri
+    xwayland-satellite
   ];
 
   fonts.packages = with pkgs; [

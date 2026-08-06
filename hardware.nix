@@ -54,7 +54,6 @@
      KEYBOARD_KEY_70063=dot
      KEYBOARD_KEY_70053=reserved
   '';
-}
 
   # Two Bluetooth radios are present: onboard Intel (8087:0aa7) and the PCIe
   # WiFi card's Intel AX BT (8087:0025). Having both active makes the DualSense
@@ -65,4 +64,5 @@
   services.udev.extraRules = ''
     SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0aa7", ATTR{authorized}="0"
   '';
+}
 

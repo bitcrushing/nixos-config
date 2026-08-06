@@ -10,9 +10,36 @@
 # This is a NixOS module (imported by configuration.nix) so it can set
 # system-level Firefox options. Home-manager settings are contributed
 # via home-manager.users.bitcrushing and merge with home.nix.
-{ ... }:
+{ config, lib, ... }:
 
 {
+  options.theme.palette = lib.mkOption {
+    type = lib.types.attrsOf lib.types.str;
+    default = {
+      bg = "201d21";
+      bgAlt = "2a2730";
+      bgPanel = "363342";
+      fg = "c8bcc8";
+      fgBright = "ddd2da";
+      fgMuted = "7c84a4";
+      accent = "6886b0";
+      accentHover = "7a9bc8";
+      accentPressed = "465b77";
+      border = "363342";
+      keyword = "9b7ba8";
+      string = "7d9aa8";
+      type = "8ec5d8";
+      variable = "a88cae";
+      numeric = "c68890";
+      destructive = "b57a82";
+      warning = "d4b07a";
+      success = "7d9aa8";
+    };
+    description = "Shared Monet dusk color palette";
+  };
+
+  config = {
+
   # ─── Firefox (NixOS-level) ────────────────────────────────────
   programs.firefox = {
     enable = true;
@@ -117,6 +144,21 @@
     MimeType=text/plain;text/english;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;application/json;application/x-yaml;application/toml;application/x-toml;
   '';
 
+  # Custom desktop file: open text files in Ghostty → Neovim (LazyVim)
+  home-manager.users.bitcrushing.xdg.dataFile."applications/Neovim.desktop".text = ''
+    [Desktop Entry]
+    Name=Neovim
+    GenericName=Text Editor
+    Comment=Edit text files in Ghostty (LazyVim)
+    Exec=ghostty -e nvim %F
+    Terminal=false
+    Type=Application
+    Icon=nvim
+    Categories=Utility;TextEditor;
+    StartupNotify=false
+    MimeType=text/plain;text/english;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;application/json;application/x-yaml;application/toml;application/x-toml;
+  '';
+
   # ─── Home-manager theme settings ──────────────────────────────
   home-manager.users.bitcrushing = {
     # ── Bash prompt ──
@@ -150,12 +192,21 @@
         "15=#ddd2da"
       ];
       background-opacity = "0.95";
-      font-family = "VictorMono Nerd Font Mono";
-      font-size = 13;
+      font-family = "AtkynsonMono Nerd Font Mono";
+      font-size = 12;
       font-style = "Medium";
+      # zero: slashed/dotted zero to distinguish 0 from O
+      # case: case-sensitive punctuation forms for all-caps text
+      font-feature = [ "zero" "case" ];
       cursor-style = "block";
       cursor-style-blink = false;
-      window-title-font-family = "VictorMono Nerd Font";
+      window-title-font-family = "Atkinson Hyperlegible Next";
+    };
+
+    # ── GTK font — GUI apps on Niri use this ──
+    gtk.font = {
+      name = "Atkinson Hyperlegible Next";
+      size = 12;
     };
 
     # ── Helix editor ──
@@ -271,7 +322,6 @@
           "twilightPurple": "#9b7ba8",
           "softMauve": "#a88cae",
           "mutedTeal": "#7d9aa8",
-          "goldenHour": "#8ec5d8",
           "gold": "#c68890",
           "dustyRose": "#b57a82",
           "teal": "#6b9aae"
@@ -281,7 +331,7 @@
           "secondary": { "dark": "mutedBlue", "light": "mutedBlue" },
           "accent": { "dark": "twilightPurple", "light": "twilightPurple" },
           "error": { "dark": "dustyRose", "light": "dustyRose" },
-          "warning": { "dark": "goldenHour", "light": "goldenHour" },
+          "warning": { "dark": "duskBlue", "light": "duskBlue" },
           "success": { "dark": "mutedTeal", "light": "mutedTeal" },
           "info": { "dark": "teal", "light": "teal" },
           "text": { "dark": "fg", "light": "fg" },
@@ -311,7 +361,7 @@
           "markdownCode": { "dark": "mutedTeal", "light": "mutedTeal" },
           "markdownBlockQuote": { "dark": "fgMuted", "light": "fgMuted" },
           "markdownEmph": { "dark": "twilightPurple", "light": "twilightPurple" },
-          "markdownStrong": { "dark": "goldenHour", "light": "goldenHour" },
+          "markdownStrong": { "dark": "softMauve", "light": "softMauve" },
           "markdownHorizontalRule": { "dark": "fgMuted", "light": "fgMuted" },
           "markdownListItem": { "dark": "duskBlue", "light": "duskBlue" },
           "markdownListEnumeration": { "dark": "mutedTeal", "light": "mutedTeal" },
@@ -324,12 +374,312 @@
           "syntaxVariable": { "dark": "softMauve", "light": "softMauve" },
           "syntaxString": { "dark": "mutedTeal", "light": "mutedTeal" },
           "syntaxNumber": { "dark": "gold", "light": "gold" },
-          "syntaxType": { "dark": "goldenHour", "light": "goldenHour" },
+          "syntaxType": { "dark": "teal", "light": "teal" },
           "syntaxOperator": { "dark": "fg", "light": "fg" },
           "syntaxPunctuation": { "dark": "fg", "light": "fg" }
         }
       }
     '';
 
+    # ── Neovim (LazyVim) colorscheme ──
+    # Same palette mapping as Helix/opencode. Normal has no bg so Ghostty
+    # transparency shows through. Types use muted teal (bright #8ec5d8 was
+    # retired). home.nix sets LazyVim opts.colorscheme = "monet_dusk".
+    xdg.configFile."nvim/colors/monet_dusk.lua".text = ''
+      -- monet_dusk — derived from twilight wallpaper; see theme.nix for palette
+      local c = {
+        bg         = "#201d21",
+        bg_panel   = "#2a2730",
+        bg_element = "#363342",
+        fg         = "#c8bcc8",
+        fg_bright  = "#ddd2da",
+        fg_muted   = "#756a85",
+        comment    = "#7c84a4",
+        blue       = "#6886b0",
+        blue_hover = "#7a9bc8",
+        muted_blue = "#55667c",
+        purple     = "#9b7ba8",
+        mauve      = "#a88cae",
+        teal       = "#6b9aae",
+        muted_teal = "#7d9aa8",
+        gold       = "#c68890",
+        warning    = "#d4b07a",
+        rose       = "#b57a82",
+      }
+
+      vim.cmd("hi clear")
+      if vim.fn.exists("syntax_on") == 1 then
+        vim.cmd("syntax reset")
+      end
+      vim.o.background = "dark"
+      vim.g.colors_name = "monet_dusk"
+
+      local function hi(group, opts)
+        vim.api.nvim_set_hl(0, group, opts)
+      end
+
+      -- ── Editor chrome ──
+      hi("Normal", { fg = c.fg }) -- no bg: terminal transparency
+      hi("NormalNC", { fg = c.fg })
+      hi("NormalFloat", { fg = c.fg, bg = c.bg_panel })
+      hi("FloatBorder", { fg = c.bg_element, bg = c.bg_panel })
+      hi("FloatTitle", { fg = c.purple, bg = c.bg_panel })
+      hi("FloatFooter", { fg = c.fg_muted, bg = c.bg_panel })
+      hi("Cursor", { reverse = true })
+      hi("CursorLine", { bg = c.bg_panel })
+      hi("CursorColumn", { bg = c.bg_panel })
+      hi("ColorColumn", { bg = c.bg_panel })
+      hi("LineNr", { fg = c.comment })
+      hi("CursorLineNr", { fg = c.fg_bright, bold = true })
+      hi("SignColumn", {})
+      hi("StatusLine", { fg = c.comment, bg = c.bg_panel })
+      hi("StatusLineNC", { fg = c.fg_muted, bg = c.bg_panel })
+      hi("WinSeparator", { fg = c.bg_element })
+      hi("VertSplit", { link = "WinSeparator" })
+      hi("Visual", { bg = c.bg_element })
+      hi("VisualNOS", { bg = c.bg_element })
+      hi("Search", { fg = c.bg, bg = c.blue })
+      hi("IncSearch", { fg = c.bg, bg = c.purple })
+      hi("CurSearch", { link = "IncSearch" })
+      hi("Substitute", { fg = c.bg, bg = c.rose })
+      hi("Pmenu", { fg = c.fg, bg = c.bg_panel })
+      hi("PmenuSel", { fg = c.bg_panel, bg = c.comment })
+      hi("PmenuSbar", { bg = c.bg_panel })
+      hi("PmenuThumb", { bg = c.bg_element })
+      hi("PmenuKind", { fg = c.purple, bg = c.bg_panel })
+      hi("PmenuExtra", { fg = c.fg_muted, bg = c.bg_panel })
+      hi("Directory", { fg = c.blue })
+      hi("Title", { fg = c.purple, bold = true })
+      hi("Question", { fg = c.teal })
+      hi("MoreMsg", { fg = c.teal })
+      hi("ModeMsg", { fg = c.fg })
+      hi("ErrorMsg", { fg = c.rose })
+      hi("WarningMsg", { fg = c.warning })
+      hi("NonText", { fg = c.bg_element })
+      hi("EndOfBuffer", { link = "NonText" })
+      hi("Whitespace", { fg = c.comment })
+      hi("SpecialKey", { fg = c.comment })
+      hi("Conceal", { fg = c.fg_muted })
+      hi("MatchParen", { fg = c.teal, underline = true })
+      hi("Folded", { fg = c.fg_muted, bg = c.bg_panel })
+      hi("FoldColumn", { fg = c.fg_muted })
+      hi("QuickFixLine", { bg = c.bg_element })
+      hi("WildMenu", { link = "PmenuSel" })
+      hi("WinBar", { fg = c.comment, bg = c.bg_panel })
+      hi("WinBarNC", { fg = c.fg_muted, bg = c.bg_panel })
+      hi("TabLine", { fg = c.comment, bg = c.bg_panel })
+      hi("TabLineSel", { fg = c.fg_bright, bg = c.bg_element })
+      hi("TabLineFill", { bg = c.bg_panel })
+      hi("SpellBad", { sp = c.rose, undercurl = true })
+      hi("SpellCap", { sp = c.warning, undercurl = true })
+      hi("SpellRare", { sp = c.purple, undercurl = true })
+      hi("SpellLocal", { sp = c.teal, undercurl = true })
+
+      -- ── Legacy syntax ──
+      hi("Comment", { fg = c.comment, italic = true })
+      hi("Constant", { fg = c.gold })
+      hi("String", { fg = c.muted_teal })
+      hi("Character", { fg = c.muted_teal })
+      hi("Number", { fg = c.gold })
+      hi("Float", { fg = c.gold })
+      hi("Boolean", { fg = c.gold })
+      hi("Identifier", { fg = c.mauve })
+      hi("Function", { fg = c.blue })
+      hi("Statement", { fg = c.purple })
+      hi("Keyword", { fg = c.purple })
+      hi("Conditional", { fg = c.purple })
+      hi("Repeat", { fg = c.purple })
+      hi("Label", { fg = c.purple })
+      hi("Operator", { fg = c.fg })
+      hi("Exception", { fg = c.rose })
+      hi("PreProc", { fg = c.purple })
+      hi("Type", { fg = c.teal })
+      hi("StorageClass", { fg = c.teal })
+      hi("Structure", { fg = c.teal })
+      hi("Typedef", { fg = c.teal })
+      hi("Special", { fg = c.blue })
+      hi("SpecialChar", { fg = c.teal })
+      hi("Tag", { fg = c.purple })
+      hi("Delimiter", { fg = c.fg })
+      hi("Underlined", { fg = c.gold, underline = true })
+      hi("Error", { fg = c.rose })
+      hi("Todo", { fg = c.blue, bold = true })
+
+      -- ── Treesitter ──
+      hi("@variable", { fg = c.mauve })
+      hi("@variable.builtin", { fg = c.rose })
+      hi("@variable.member", { fg = c.fg })
+      hi("@variable.parameter", { fg = c.mauve })
+      hi("@constant", { fg = c.gold })
+      hi("@constant.builtin", { fg = c.gold })
+      hi("@string", { fg = c.muted_teal })
+      hi("@string.escape", { fg = c.teal })
+      hi("@character", { fg = c.muted_teal })
+      hi("@number", { fg = c.gold })
+      hi("@boolean", { fg = c.gold })
+      hi("@float", { fg = c.gold })
+      hi("@function", { fg = c.blue })
+      hi("@function.call", { fg = c.blue })
+      hi("@function.method", { fg = c.blue })
+      hi("@function.builtin", { fg = c.rose })
+      hi("@constructor", { fg = c.blue })
+      hi("@keyword", { fg = c.purple })
+      hi("@keyword.function", { fg = c.purple })
+      hi("@keyword.return", { fg = c.purple })
+      hi("@keyword.conditional", { fg = c.purple })
+      hi("@keyword.repeat", { fg = c.purple })
+      hi("@keyword.operator", { fg = c.fg })
+      hi("@type", { fg = c.teal })
+      hi("@type.builtin", { fg = c.teal })
+      hi("@property", { fg = c.fg })
+      hi("@namespace", { fg = c.purple })
+      hi("@module", { fg = c.purple })
+      hi("@operator", { fg = c.fg })
+      hi("@punctuation", { fg = c.fg })
+      hi("@punctuation.bracket", { fg = c.fg })
+      hi("@punctuation.delimiter", { fg = c.fg })
+      hi("@comment", { fg = c.comment, italic = true })
+      hi("@tag", { fg = c.purple })
+      hi("@tag.attribute", { fg = c.purple })
+      hi("@tag.delimiter", { fg = c.fg })
+      -- markup (matches opencode markdown roles)
+      hi("@markup.heading", { fg = c.blue, bold = true })
+      hi("@markup.strong", { fg = c.mauve, bold = true })
+      hi("@markup.italic", { fg = c.purple, italic = true })
+      hi("@markup.strikethrough", { strikethrough = true })
+      hi("@markup.link", { fg = c.teal, underline = true })
+      hi("@markup.link.url", { fg = c.gold, underline = true })
+      hi("@markup.raw", { fg = c.muted_teal })
+      hi("@markup.quote", { fg = c.teal })
+      hi("@markup.list", { fg = c.mauve })
+      hi("@diff.plus", { fg = c.muted_teal })
+      hi("@diff.minus", { fg = c.rose })
+      hi("@diff.delta", { fg = c.gold })
+
+      -- ── Diagnostics ──
+      hi("DiagnosticError", { fg = c.rose })
+      hi("DiagnosticWarn", { fg = c.warning })
+      hi("DiagnosticInfo", { fg = c.blue })
+      hi("DiagnosticHint", { fg = c.comment })
+      hi("DiagnosticOk", { fg = c.muted_teal })
+      hi("DiagnosticUnderlineError", { sp = c.rose, undercurl = true })
+      hi("DiagnosticUnderlineWarn", { sp = c.warning, undercurl = true })
+      hi("DiagnosticUnderlineInfo", { sp = c.blue, undercurl = true })
+      hi("DiagnosticUnderlineHint", { sp = c.comment, undercurl = true })
+      hi("DiagnosticVirtualTextError", { fg = c.rose, bg = c.bg_panel })
+      hi("DiagnosticVirtualTextWarn", { fg = c.warning, bg = c.bg_panel })
+      hi("DiagnosticVirtualTextInfo", { fg = c.blue, bg = c.bg_panel })
+      hi("DiagnosticVirtualTextHint", { fg = c.comment, bg = c.bg_panel })
+
+      -- ── Git / diff ──
+      hi("DiffAdd", { fg = c.muted_teal, bg = c.bg_panel })
+      hi("DiffDelete", { fg = c.rose, bg = c.bg_panel })
+      hi("DiffChange", { fg = c.gold, bg = c.bg_panel })
+      hi("DiffText", { fg = c.fg_bright, bg = c.bg_element })
+      hi("Added", { fg = c.muted_teal })
+      hi("Removed", { fg = c.rose })
+      hi("Changed", { fg = c.gold })
+      hi("GitSignsAdd", { fg = c.muted_teal })
+      hi("GitSignsChange", { fg = c.gold })
+      hi("GitSignsDelete", { fg = c.rose })
+
+      -- ── Plugin groups (LazyVim defaults) ──
+      hi("WhichKey", { fg = c.purple })
+      hi("WhichKeyDesc", { fg = c.fg })
+      hi("WhichKeyGroup", { fg = c.blue })
+      hi("WhichKeySeparator", { fg = c.fg_muted })
+      hi("IblIndent", { fg = c.bg_panel })
+      hi("IblScope", { fg = c.muted_blue })
+      hi("NeoTreeDirectoryName", { fg = c.blue })
+      hi("NeoTreeDirectoryIcon", { fg = c.blue })
+      hi("NeoTreeFileName", { fg = c.fg })
+      hi("NeoTreeGitAdded", { fg = c.muted_teal })
+      hi("NeoTreeGitModified", { fg = c.gold })
+      hi("NeoTreeGitDeleted", { fg = c.rose })
+      hi("NotifyERRORBorder", { fg = c.rose })
+      hi("NotifyWARNBorder", { fg = c.warning })
+      hi("NotifyINFOBorder", { fg = c.blue })
+      hi("NotifyERRORTitle", { fg = c.rose })
+      hi("NotifyWARNTitle", { fg = c.warning })
+      hi("NotifyINFOTitle", { fg = c.blue })
+      hi("TelescopeNormal", { fg = c.fg, bg = c.bg_panel })
+      hi("TelescopeBorder", { fg = c.bg_element, bg = c.bg_panel })
+      hi("TelescopeSelection", { bg = c.bg_element })
+      hi("TelescopeMatching", { fg = c.purple, bold = true })
+    '';
+
+    # ── spotify-player ──
+    # No palette.background → terminal transparency shows through.
+    # app.toml (managed manually) must set theme = "monet_dusk".
+    xdg.configFile."spotify-player/theme.toml".text = ''
+      [[themes]]
+      name = "monet_dusk"
+
+      [themes.palette]
+      foreground = "#c8bcc8"
+
+      [themes.component_style.block_title]
+      fg = "#9b7ba8"
+      modifiers = ["Bold"]
+
+      [themes.component_style.border]
+      fg = "#363342"
+
+      [themes.component_style.playback_status]
+      fg = "#6886b0"
+      modifiers = ["Bold"]
+
+      [themes.component_style.playback_track]
+      fg = "#ddd2da"
+      modifiers = ["Bold"]
+
+      [themes.component_style.playback_artists]
+      fg = "#6886b0"
+      modifiers = ["Bold"]
+
+      [themes.component_style.playback_album]
+      fg = "#a88cae"
+
+      [themes.component_style.playback_genres]
+      fg = "#7c84a4"
+      modifiers = ["Italic"]
+
+      [themes.component_style.playback_metadata]
+      fg = "#7c84a4"
+
+      [themes.component_style.playback_progress_bar]
+      fg = "#6886b0"
+      bg = "#363342"
+
+      [themes.component_style.playback_progress_bar_unfilled]
+      bg = "#363342"
+
+      [themes.component_style.current_playing]
+      fg = "#7d9aa8"
+      modifiers = ["Bold"]
+
+      [themes.component_style.page_desc]
+      fg = "#7a9bc8"
+      modifiers = ["Bold"]
+
+      [themes.component_style.playlist_desc]
+      fg = "#756a85"
+      modifiers = ["Dim"]
+
+      [themes.component_style.table_header]
+      fg = "#9b7ba8"
+
+      [themes.component_style.selection]
+      modifiers = ["Bold", "Reversed"]
+
+      [themes.component_style.like]
+      fg = "#b57a82"
+
+      [themes.component_style.lyrics_playing]
+      fg = "#7a9bc8"
+      modifiers = ["Bold"]
+    '';
+
   };
+};
 }

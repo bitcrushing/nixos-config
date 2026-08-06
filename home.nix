@@ -16,15 +16,16 @@
   programs.bash = {
     enable = true;
     shellAliases = {
-      nrs = "sudo nixos-rebuild switch --flake ~/nixos#PC";
-      nrb = "nixos-rebuild build --flake ~/nixos#PC";
-      nrt = "sudo nixos-rebuild test --flake ~/nixos#PC";
+      nrs = "sudo nixos-rebuild switch --flake ~/nixos#PC |& nom";
+      nrb = "nixos-rebuild build --flake ~/nixos#PC |& nom";
+      nrt = "sudo nixos-rebuild test --flake ~/nixos#PC |& nom";
     };
   };
 
   home.sessionVariables = {
-    SUDO_EDITOR = "hx";
-    EDITOR = "hx";
+    SUDO_EDITOR = "nvim";
+    VISUAL = "nvim";
+    # EDITOR=nvim comes from programs.neovim.defaultEditor below.
   };
 
   home.packages = with pkgs; [
@@ -36,6 +37,16 @@
     opencode
     scrcpy
     android-tools
+    nix-output-monitor # nom: prettier nix build output
+
+    # LazyVim runtime requirements
+    # (git, ripgrep, curl, tar, gzip and a Nerd Font are already installed)
+    gcc # compiles tree-sitter parsers
+    tree-sitter # CLI required by nvim-treesitter to build parsers
+    bash-language-server # bashls for LazyVim util.dot extra (mason=false)
+    fd # file finding for pickers
+    lazygit # git TUI used by LazyVim
+    unzip # mason.nvim archive extraction
 
     # Desktop apps
     discord
@@ -44,6 +55,7 @@
     qbittorrent
     spotify-player
     obsidian
+    krita
 
     # Games
     lutris
@@ -53,7 +65,6 @@
     prismlauncher
     vulkan-tools
     opentrack
-    aitrack
 
     # Audio
     renoise
@@ -92,6 +103,38 @@
 
   programs.obs-studio.enable = true;
 
+  programs.yazi = {
+    enable = true;
+    # `y` shell wrapper: exit yazi and land in its last directory.
+    enableBashIntegration = true;
+
+    plugins = {
+      # Git status linemode in the file listing.
+      git = {
+        package = pkgs.yaziPlugins.git;
+        setup = true; # require("git"):setup() in init.lua
+      };
+      lazygit = pkgs.yaziPlugins.lazygit;
+      smart-enter = pkgs.yaziPlugins.smart-enter;
+    };
+
+    keymap.mgr.prepend_keymap = [
+      {
+        on = [
+          "g"
+          "i"
+        ];
+        run = "plugin lazygit";
+        desc = "Run lazygit";
+      }
+      {
+        on = "l";
+        run = "plugin smart-enter";
+        desc = "Enter directory or open file";
+      }
+    ];
+  };
+
   # PipeASIO's Wine/Proton loader needs the ELF .so half to live under $HOME
   # (the Proton container exposes home by default, but may not expose /nix/store).
   # Keep a local copy updated on every home-manager activation.
@@ -110,9 +153,73 @@
 
   programs.ghostty.enable = true;
 
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true; # sets EDITOR=nvim
+    viAlias = true;
+    vimAlias = true;
+    # LazyVim distribution. Config is nix-managed here; lazy.nvim installs
+    # plugins to ~/.local/share/nvim at runtime (writable, outside the store).
+    initLua = ''
+      -- Bootstrap lazy.nvim
+      local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+      if not (vim.uv or vim.loop).fs_stat(lazypath) then
+        local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+        local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+        if vim.v.shell_error ~= 0 then
+          vim.api.nvim_echo({
+            { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+            { out, "WarningMsg" },
+            { "\nPress any key to exit..." },
+          }, true, {})
+          vim.fn.getchar()
+          os.exit(1)
+        end
+      end
+      vim.opt.rtp:prepend(lazypath)
+
+      require("lazy").setup({
+        spec = {
+          -- monet_dusk colorscheme: plain colors/ file managed in theme.nix
+          { "LazyVim/LazyVim", import = "lazyvim.plugins", opts = { colorscheme = "monet_dusk" } },
+          -- OCaml: treesitter highlighting + LSP config (from LazyVim's lang extra)
+          { import = "lazyvim.plugins.extras.lang.ocaml" },
+          {
+            "neovim/nvim-lspconfig",
+            opts = {
+              servers = {
+                -- mason=false: server binaries come from nixpkgs (home.packages),
+                -- not mason. bashls install via mason needs npm (absent) and
+                -- errorred on every startup.
+                bashls = { mason = false },
+                ocamllsp = { mason = false },
+              },
+            },
+          },
+        },
+        defaults = {
+          lazy = false,
+          version = false, -- always use the latest git commit
+        },
+        checker = { enabled = true }, -- automatically check for plugin updates
+        performance = {
+          rtp = {
+            disabled_plugins = {
+              "gzip",
+              "tarPlugin",
+              "tohtml",
+              "tutor",
+              "zipPlugin",
+            },
+          },
+        },
+      })
+    '';
+  };
+
   programs.helix = {
     enable = true;
-    defaultEditor = true;
+    defaultEditor = false; # nvim is the default editor now; hx stays installed
     settings = {
       editor = {
         line-number = "relative";

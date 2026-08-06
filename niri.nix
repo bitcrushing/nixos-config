@@ -1,8 +1,11 @@
 # Niri session configuration: compositor config, status bar, notifications,
 # and application launcher. Contributed to home-manager (merges with
 # home.nix and theme.nix).
-{ ... }:
+{ config, ... }:
 
+let
+  p = config.theme.palette;
+in
 {
   home-manager.users.bitcrushing = {
     # ── Niri compositor ────────────────────────────────────────
@@ -61,7 +64,7 @@
 
         // Terminal (default uses Mod+T + alacritty; changed to Mod+Return + ghostty)
         Mod+Return hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
-        Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
+        Mod+Space hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
 
         // Volume keys (PipeWire/WirePlumber) — work even when locked
         XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.0"; }
@@ -214,7 +217,7 @@
 
         // Lock screen — thin ring, transparent inside, wallpaper background
         Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" {
-          spawn-sh "swaylock --image ${./wallpaper.jpg} --scaling fill --indicator-radius 100 --indicator-thickness 4 --inside-color 00000000 --inside-clear-color 00000000 --inside-ver-color 00000000 --inside-wrong-color 00000000 --ring-color ddd2da --ring-clear-color 6886b0 --ring-ver-color 7d9aa8 --ring-wrong-color b57a82 --line-uses-ring --key-hl-color 6886b0 --bs-hl-color b57a82 --separator-color 00000000 --text-color c8bcc8 --font 'VictorMono Nerd Font' --font-size 20 --ignore-empty-password --show-failed-attempts --disable-caps-lock-text";
+          spawn-sh "swaylock --image ${./wallpaper.jpg} --scaling fill --indicator-radius 100 --indicator-thickness 4 --inside-color 00000000 --inside-clear-color 00000000 --inside-ver-color 00000000 --inside-wrong-color 00000000 --ring-color ddd2da --ring-clear-color 6886b0 --ring-ver-color 7d9aa8 --ring-wrong-color b57a82 --line-uses-ring --key-hl-color 6886b0 --bs-hl-color b57a82 --separator-color 00000000 --text-color c8bcc8 --font 'Atkinson Hyperlegible Next' --font-size 20 --ignore-empty-password --show-failed-attempts --disable-caps-lock-text";
         }
       }
 
@@ -269,8 +272,8 @@
 
     xdg.configFile."waybar/style.css".text = ''
       * {
-        font-family: "VictorMono Nerd Font";
-        font-size: 13px;
+        font-family: "Atkinson Hyperlegible Next";
+        font-size: 14px;
       }
       window#waybar {
         background: rgba(32, 29, 33, 0.92);
@@ -299,25 +302,30 @@
       text-color=#c8bcc8
       progress-color=source
       border-radius=8
-      font=VictorMono Nerd Font 12
+      font=Atkinson Hyperlegible Next 12
       anchor=top-right
       default-timeout=5000
     '';
 
     # ── Fuzzel application launcher ───────────────────────────
-    xdg.configFile."fuzzel/config.ini".text = ''
+    xdg.configFile."fuzzel/fuzzel.ini".text = ''
+      [main]
       prompt=>
-      font=VictorMono Nerd Font:size=12
-      background-color=201d21ff
-      text-color=c8bcc8ff
-      prompt-color=6886b0ff
-      selection-color=363342ff
-      selection-text-color=ddd2daff
-      border-color=363342ff
-      border-size=2
-      border-radius=8
+      font=Atkinson Hyperlegible Next:size=12
       line-height=20
-      padding=8
+      inner-pad=8
+
+      [colors]
+      background=${p.bg}ff
+      text=${p.fg}ff
+      prompt=${p.accent}ff
+      selection=${p.bgPanel}ff
+      selection-text=${p.fgBright}ff
+      border=${p.border}ff
+
+      [border]
+      width=2
+      radius=8
     '';
   };
 }

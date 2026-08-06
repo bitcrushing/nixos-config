@@ -72,7 +72,8 @@
   fonts.packages = with pkgs; [
     corefonts
     vista-fonts
-    nerd-fonts.victor-mono
+    atkinson-hyperlegible-next
+    (callPackage ./pkgs/atkinson-nerdfont { })
   ];
 
   # This option defines the first version of NixOS you have installed on this

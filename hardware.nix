@@ -55,3 +55,14 @@
      KEYBOARD_KEY_70053=reserved
   '';
 }
+
+  # Two Bluetooth radios are present: onboard Intel (8087:0aa7) and the PCIe
+  # WiFi card's Intel AX BT (8087:0025). Having both active makes the DualSense
+  # bond on one adapter while SDP service discovery races/lands on the other,
+  # failing with "error updating services: Host is down (112)" so the HID
+  # profile never attaches and no gamepad device is created. Deauthorize the
+  # onboard radio so only the PCIe card's Bluetooth is used.
+  services.udev.extraRules = ''
+    SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0aa7", ATTR{authorized}="0"
+  '';
+

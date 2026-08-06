@@ -1,4 +1,4 @@
-# Low-latency professional audio via PipeWire.
+# Low-latency audio via PipeWire.
 # Includes a WirePlumber rule forcing the Focusrite Scarlett 6i6 into its
 # 5.0 analogue-surround profile, and a udev rule keeping USB autosuspend off
 # for the Scarlett so it doesn't drop out.

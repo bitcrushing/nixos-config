@@ -13,6 +13,12 @@ in
       // Monet dusk — Niri scrollable-tiling compositor
       input {
         keyboard {
+          // Niri disables NumLock unless this is present, which leaves the
+          // numpad emitting Home/Up/PgUp/Insert/Delete instead of digits
+          // (/ * - + still work — they ignore NumLock). Enabling it here also
+          // makes niri the single authority for the pad's NumLock LED; see
+          // hardware.nix for why nothing else may write that LED.
+          numlock
           xkb {
             layout "us"
           }

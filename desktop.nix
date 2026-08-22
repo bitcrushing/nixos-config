@@ -69,7 +69,24 @@
   # Process scheduler optimisations
   services.ananicy = {
     enable = true;
-    package = pkgs.ananicy-cpp;
+    # ananicy-cpp 1.2.0 (still the latest upstream tag, master included) relies
+    # on transitive <cstring>/<cstdint> includes that glibc 2.42's headers no
+    # longer provide, so the build fails with "no member named 'memset' /
+    # 'strerror' / 'int32_t' in namespace 'std'". Add the header to every file
+    # that uses std:: mem*/str*/int*_t but doesn't include it. (A global
+    # -include flag is not possible: the bundled BPF C code can't see C++-
+    # only headers.) Drop this override once nixpkgs' ananicy-cpp builds
+    # cleanly again.
+    package = pkgs.ananicy-cpp.overrideAttrs (old: {
+      postPatch = (old.postPatch or "") + ''
+        for f in $(grep -rlE 'std::(u?int(8|16|32|64)_t)' src include); do
+          grep -q '#include <cstdint>' "$f" || sed -i '1i #include <cstdint>' "$f"
+        done
+        for f in $(grep -rlE 'std::(memset|memcpy|memmove|strlen|strcmp|strerror|strncpy|strcpy)' src include); do
+          grep -q '#include <cstring>' "$f" || sed -i '1i #include <cstring>' "$f"
+        done
+      '';
+    });
     rulesProvider = pkgs.ananicy-rules-cachyos;
   };
 

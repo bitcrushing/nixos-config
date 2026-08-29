@@ -193,7 +193,7 @@
       ];
       background-opacity = "0.95";
       font-family = "AtkynsonMono Nerd Font Mono";
-      font-size = 12;
+      font-size = 11;
       font-style = "Medium";
       # zero: slashed/dotted zero to distinguish 0 from O
       # case: case-sensitive punctuation forms for all-caps text

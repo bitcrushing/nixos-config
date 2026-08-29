@@ -147,6 +147,16 @@ let
   '';
 in
 {
+  # Logitech device support and Solaar manager
+  hardware.logitech.wireless.enable = true;
+  programs.solaar = {
+    enable = true;
+    userService = {
+      enable = true;
+      window = "hide";
+    };
+  };
+
   # Two Bluetooth radios are present: onboard Intel (8087:0aa7) and the PCIe
   # WiFi card's Intel AX BT (8087:0025). Having both active makes the DualSense
   # bond on one adapter while SDP service discovery races/lands on the other,

@@ -7,3 +7,7 @@
 # Build results
 result
 result-*
+
+# Proprietary installer archives
+installers/*
+!installers/.gitkeep

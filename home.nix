@@ -67,7 +67,35 @@
     opentrack
 
     # Audio
-    renoise
+    (
+      let
+        version = pkgs.renoise.version;
+        verClean = lib.replaceStrings [ "." ] [ "" ] version;
+        verUnderscore = lib.replaceStrings [ "." ] [ "_" ] version;
+        arch = if pkgs.stdenv.hostPlatform.isAarch64 then "arm64" else "x86_64";
+
+        candidates = [
+          (./installers + "/rns_${verClean}_linux_${arch}.tar.gz")
+          (./installers + "/rns_${verUnderscore}_linux_${arch}.tar.gz")
+        ];
+
+        foundInstaller = lib.findFirst builtins.pathExists null candidates;
+      in
+      if foundInstaller == null then
+        throw ''
+          Renoise was updated in nixpkgs to version ${version}, but the matching full installer
+          was not found in ~/nixos/installers/ (expected rns_${verClean}_linux_${arch}.tar.gz).
+
+          Please download the Linux installer for Renoise ${version} from https://backstage.renoise.com,
+          place it in ~/nixos/installers/, and notify git with:
+            git add -N installers/rns_${verClean}_linux_${arch}.tar.gz
+        ''
+      else
+        pkgs.renoise.override {
+          releasePath = foundInstaller;
+        }
+    )
+    plugdata
     qpwgraph
     qjackctl
     pavucontrol

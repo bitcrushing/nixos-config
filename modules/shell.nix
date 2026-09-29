@@ -6,6 +6,8 @@
   # only then asks for sudo to activate, so the password prompt isn't hidden
   # behind the build progress. (Its `clean` feature stays off: it would also
   # delete devenv/direnv GC roots. Garbage collection is in configuration.nix.)
+  # The aliases below pass the flake path explicitly; NH_FLAKE (from `flake`)
+  # only reaches shells after a fresh login, and covers plain `nh os ...`.
   programs.nh = {
     enable = true;
     flake = "/home/bitcrushing/nixos";
@@ -15,14 +17,36 @@
     programs.bash = {
       enable = true;
       shellAliases = {
-        nrs = "nh os switch"; # build, show diff, sudo, activate + boot entry
+        nrs = "nh os switch ~/nixos"; # build, show diff, sudo, activate + boot entry
         # build only (no sudo). The result link goes to /tmp (wiped on boot) so
         # stray ./result links don't keep old systems from being collected.
-        nrb = "nh os build --out-link /tmp/nixos-build-result";
-        nrt = "nh os test"; # activate without adding a boot entry
+        nrb = "nh os build ~/nixos --out-link /tmp/nixos-build-result";
+        nrt = "nh os test ~/nixos"; # activate without adding a boot entry
+
+        # GUI apps whose command names don't say what they do. All go through
+        # `launch` (below), so the terminal stays usable and quiet.
+        open = "launch xdg-open"; # any file, in its default app
+        img = "launch loupe";
+        pdf = "launch papers";
+        audio = "launch org.gnome.Decibels";
+        decibels = "launch org.gnome.Decibels";
+        archive = "launch file-roller";
+        mixer = "launch pavucontrol";
+        bt = "launch blueman-manager";
+        writer = "launch libreoffice --writer";
+        calc = "launch libreoffice --calc";
+        razer = "launch polychromatic-controller";
+        remap = "launch input-remapper-gtk";
+        discord = "launch vesktop";
       };
       initExtra = ''
         PS1='\[\033[01;34m\]\u@\h:\w\[\033[00m\]\$ '
+
+        # Start a GUI app detached from this terminal: no log noise, and it
+        # keeps running if the terminal closes. `launch <command> [args]`
+        launch() { setsid -f "$@" >/dev/null 2>&1; }
+        # File manager, in the current directory unless given paths.
+        files() { launch nautilus "''${@:-.}"; }
       '';
     };
 

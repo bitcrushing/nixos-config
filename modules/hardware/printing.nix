@@ -1,7 +1,8 @@
-# Printing via CUPS, with HP drivers.
+# CUPS with HP drivers; avahi finds network printers.
 { pkgs, ... }:
 
 {
   services.printing.enable = true;
   services.printing.drivers = [ pkgs.hplip ];
+  services.avahi.enable = true;
 }

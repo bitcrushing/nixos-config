@@ -1,96 +1,89 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+# Host-wide basics. Everything else lives in a topic module under modules/;
+# the imports list below is the table of contents.
+{ config, pkgs, ... }:
 
 {
   imports = [
     ./hardware-configuration.nix
-    ./hardware.nix
-    ./audio.nix
-    ./desktop.nix
-    ./gaming.nix
-    ./printing.nix
-    ./theme.nix
-    ./niri.nix
+
+    ./modules/theme.nix # stylix: colours, fonts, cursor, icons, wallpaper
+    ./modules/shell.nix # bash, CLI tools, git, ghostty
+    ./modules/apps.nix # GUI apps without their own module
+    ./modules/storage.nix # /mnt/data + weekly bcachefs scrub
+
+    ./modules/desktop/niri.nix # compositor, login, session services
+    ./modules/desktop/waybar.nix
+    ./modules/desktop/wallpaper.nix # generated from the palette, one image across both monitors
+    ./modules/desktop/portals.nix # screencast / file picker routing
+    ./modules/desktop/tools.nix # idle lock, volume OSD, clipboard history, screenshot annotation, power menu
+
+    ./modules/hardware/bluetooth.nix
+    ./modules/hardware/numpad.nix # Magicforce numpad NumLock workaround
+    ./modules/hardware/peripherals.nix # Razer mouse, input-remapper
+    ./modules/hardware/printing.nix
+
+    ./modules/audio/pipewire.nix # low-latency PipeWire, Scarlett 6i6
+    ./modules/audio/production.nix # DAWs, plugins, PipeASIO
+
+    ./modules/gaming/steam.nix
+    ./modules/gaming/headtracking.nix # opentrack + phone camera for Nuclear Option
+
+    ./modules/editors/neovim.nix
+    ./modules/editors/tooling.nix # LSPs, formatters, dev tools
+
+    ./modules/pi # pi coding agent
   ];
 
-  # ─── Boot ───────────────────────────────────────────────────
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.supportedFilesystems = [ "bcachefs" ];
+  nixpkgs.overlays = [ (import ./pkgs) ];
+  nixpkgs.config.allowUnfree = true;
 
-  # ─── Filesystems ────────────────────────────────────────────
-  fileSystems."/mnt/data" = {
-    device = "/dev/disk/by-label/data";
-    fsType = "bcachefs";
-  };
-
-  systemd.services.bcachefs-scrub = {
-    description = "bcachefs scrub";
-    serviceConfig.ExecStart = "${pkgs.bcachefs-tools}/bin/bcachefs fsck -n /dev/nvme0n1p1";
-  };
-
-  systemd.timers.bcachefs-scrub = {
-    wantedBy = [ "timers.target" ];
-    timerConfig.onCalendar = "weekly";
-  };
-
-  # ─── Nix ────────────────────────────────────────────────────
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
   ];
-  nixpkgs.config.allowUnfree = true;
+  nix.settings.auto-optimise-store = true; # hard-link identical files in the store
 
-  # ─── Networking ─────────────────────────────────────────────
+  # Housekeeping: weekly, keep the 5 newest system generations and delete
+  # everything no longer referenced. The boot menu lists at most 5.
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+  };
+  systemd.services.nix-gc.preStart = "${config.nix.package}/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +5";
+
+  # ─── Boot ───────────────────────────────────────────────────
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.configurationLimit = 5;
+  boot.loader.efi.canTouchEfiVariables = true;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.tmp.cleanOnBoot = true; # /tmp is on the root disk, so it would otherwise never empty
+
+  # ─── System ─────────────────────────────────────────────────
   networking.hostName = "PC";
   networking.networkmanager.enable = true;
-
-  # ─── Time ───────────────────────────────────────────────────
   time.timeZone = "Europe/Dublin";
 
-  # ─── User ───────────────────────────────────────────────────
   users.users.bitcrushing = {
     isNormalUser = true;
     extraGroups = [
       "wheel"
       "networkmanager"
       "audio"
-      "realtime"
     ];
   };
 
-  # ─── Misc ───────────────────────────────────────────────────
   security.sudo.extraConfig = ''
     Defaults env_editor
   '';
 
-  fonts.packages = with pkgs; [
-    corefonts
-    vista-fonts
-    atkinson-hyperlegible-next
-    (callPackage ./pkgs/atkinson-nerdfont { })
-  ];
+  # Process priority rules (CachyOS ruleset).
+  services.ananicy = {
+    enable = true;
+    package = pkgs.ananicy-cpp;
+    rulesProvider = pkgs.ananicy-rules-cachyos;
+  };
 
-  # This option defines the first version of NixOS you have installed on this
-  # particular machine, and is used to maintain compatibility with application
-  # data (e.g. databases) created on older NixOS versions.
-  #
-  # Most users should NEVER change this value after the initial install, for any
-  # reason, even if you have upgraded your system to a new NixOS release.
-  #
-  # This value does NOT affect the Nixpkgs version your OS is pulled from, so
-  # changing it will NOT upgrade your system - see
-  # https://nixos.org/manual/nixos/stable/#sec-upgrading for how to actually do that.
-  #
-  # Do NOT change this value unless you have manually inspected the changes it
-  # would make to your configuration, and migrated your data accordingly.
-  #
-  # For more information, see `man configuration.nix` or
-  # https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
+  # Never change these after install; they are not the NixOS version.
   system.stateVersion = "26.05";
+  hm.home.stateVersion = "26.05";
 }

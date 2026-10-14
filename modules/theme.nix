@@ -76,18 +76,18 @@ in
 
     fonts = {
       sansSerif = {
-        package = pkgs.atkinson-hyperlegible-next;
-        name = "Atkinson Hyperlegible Next";
+        package = pkgs.jost;
+        name = "Jost*"; # the asterisk is part of the family name
       };
       monospace = {
-        package = pkgs.atkinson-nerdfont;
-        name = "AtkynsonMono Nerd Font Mono";
+        package = pkgs.dm-mono;
+        name = "DM Mono";
       };
       sizes = {
         applications = 12;
         desktop = 11; # waybar
         popups = 12; # mako, fuzzel
-        terminal = 11;
+        terminal = 12;
       };
     };
 
@@ -109,6 +109,7 @@ in
   hm.dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
   fonts.packages = with pkgs; [
+    nerd-fonts.symbols-only # icon fallback for waybar; Jost and DM Mono have none
     corefonts
     vista-fonts
   ];

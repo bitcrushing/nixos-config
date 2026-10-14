@@ -1,0 +1,63 @@
+;; Krita left-hand keypad: Magicforce numpad (left of the keyboard, thumb
+;; on Enter) plus the Razer thumb buttons. Runs only while Krita is open
+;; (see drawing-keypad.nix); the main keyboard is never touched.
+;; Mouse thumb buttons: rear = undo (Ctrl+Z), front = redo (Ctrl+Shift+Z).
+;; HOLD Num Lock (~0.5s) to toggle between this layout and a normal numpad.
+;; Quick Num Lock taps are ignored: some numpads inject Num Lock on their own.
+;; Emergency exit: LCtrl+Space+Esc.
+;;
+;;  ┌───────┬───────┬───────┬───────┐
+;;  │NumLk  │  /    │  *    │  -    │
+;;  │normal │brush- │brush+ │reset  │
+;;  │numpad │  [    │  ]    │zoom   │
+;;  ├───────┼───────┼───────┼───────┤
+;;  │  7    │  8    │  9    │  +    │
+;;  │eraser │rotate │rotate │       │
+;;  │  E    │15° ←  │15° →  │ brush │
+;;  ├───────┼───────┼───────┤       │
+;;  │  4    │  5    │  6    │editor │
+;;  │mirror │ Shift │ Ctrl  │  F5   │
+;;  │  M    │(hold) │(hold) │       │
+;;  ├───────┼───────┼───────┼───────┤
+;;  │  1    │  2    │  3    │ Enter │
+;;  │rotate │ zoom  │ pan   │       │
+;;  │(hold) │(hold) │(hold) │ DRAW  │
+;;  ├───────┴───────┼───────┤(thumb)│
+;;  │  0            │  .    │       │
+;;  │ reset rotate  │palette│       │
+;;  │ (Krita "5")   │ (RMB) │       │
+;;  └───────────────┴───────┴───────┘
+;; Hold 1/2/3 and move the mouse to rotate/zoom/pan.
+(defsrc
+  nlck kp/  kp*  kp-
+  kp7  kp8  kp9  kp+
+  kp4  kp5  kp6
+  kp1  kp2  kp3  kprt
+  kp0       kp.
+  mbck mfwd
+)
+
+(defalias
+  num  (tap-hold 200 500 XX (layer-switch numpad))
+  drw  (tap-hold 200 500 XX (layer-switch draw))
+  zoom (multi lctl mmid)
+  rot  (multi lsft mmid)
+)
+
+(deflayer draw
+  @num  [     ]     1
+  e     4     6     f5
+  m     lsft  lctl
+  @rot  @zoom mmid  mlft
+  5           mrgt
+  C-z  C-S-z
+)
+
+(deflayer numpad
+  @drw  _     _     _
+  _     _     _     _
+  _     _     _
+  _     _     _     _
+  _           _
+  _    _
+)

@@ -26,5 +26,9 @@
     taplo # TOML
     yaml-language-server
     marksman # Markdown
+
+    # Odin
+    odin # compiler
+    ols # LSP, ships odinfmt
   ];
 }

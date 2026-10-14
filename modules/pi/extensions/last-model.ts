@@ -36,7 +36,9 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", async (event, ctx) => {
     if (event.reason !== "startup" && event.reason !== "new") return;
-    if (ctx.sessionManager.getEntries().length > 0) return;
+    // Fresh sessions already hold pi's own model_change/thinking_level_change
+    // entries by now, so only treat a session with messages as "used".
+    if (ctx.sessionManager.getEntries().some((e) => e.type === "message")) return;
     if (process.argv.includes("--model") || process.argv.includes("--provider")) return;
     const last = await loadLast();
     if (!last) return;

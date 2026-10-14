@@ -19,6 +19,7 @@
 
     ./modules/hardware/bluetooth.nix
     ./modules/hardware/numpad.nix # Magicforce numpad NumLock workaround
+    ./modules/hardware/drawing-keypad.nix # kanata Krita keypad on the numpad + mouse thumb buttons
     ./modules/hardware/peripherals.nix # Razer mouse, input-remapper
     ./modules/hardware/printing.nix
 

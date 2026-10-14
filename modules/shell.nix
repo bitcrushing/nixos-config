@@ -96,11 +96,7 @@
     programs.ghostty = {
       enable = true;
       settings = {
-        font-style = "Medium";
-        font-feature = [
-          "zero" # slashed zero
-          "case" # case-sensitive punctuation
-        ];
+        font-style = "Medium"; # DM Mono's zero is slashed by default
         cursor-style = "block";
         cursor-style-blink = false;
         scrollbar = "never"; # scrolling still works

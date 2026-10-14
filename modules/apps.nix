@@ -33,6 +33,7 @@
         krita
         qbittorrent
         syncplay
+        opencode
       ];
 
       # Official Spotify client patched by spicetify; stylix supplies the theme.

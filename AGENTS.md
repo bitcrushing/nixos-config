@@ -19,7 +19,7 @@ New files must be tracked by git (`git add` or `git add -N`) before the flake ca
 - `configuration.nix`: host basics plus the **imports list, which is the table of contents**. Every module is listed there explicitly; there is no auto-import.
 - `modules/<topic>.nix` or `modules/<topic>/*.nix`: one topic per file, holding both the NixOS and the home-manager settings for it.
 - Non-Nix config lives in real files next to its module (`niri/*.kdl`, `neovim/init.lua`, `headtracking/*.sh`, `numpad-led-responder.py`, `pi/extensions/*.ts`) and is pulled in with `source =` / `builtins.readFile`. Keep it that way; don't inline other languages as Nix strings.
-- `pkgs/`: local packages, exposed through the overlay in `pkgs/default.nix` as `pkgs.pipeasio`, `pkgs.atkinson-nerdfont`, and `pkgs.renoise` (full version from `installers/`).
+- `pkgs/`: local packages, exposed through the overlay in `pkgs/default.nix` as `pkgs.pipeasio` and `pkgs.renoise` (full version from `installers/`).
 - `assets/wallpaper/generate.py`: the wallpaper generator (Python/numpy), run at build time by `modules/desktop/wallpaper.nix` with the stylix palette. It renders one wide image and splits it per monitor.
 
 ## Conventions

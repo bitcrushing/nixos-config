@@ -33,7 +33,6 @@ in
     {
       home.packages = with pkgs; [
         renoise # full version via pkgs/renoise
-        plugdata
         audacity
         pipeasio
       ];

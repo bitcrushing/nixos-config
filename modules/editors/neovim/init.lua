@@ -61,9 +61,13 @@ require("lazy").setup({
           -- Never let mason install these (it can't without npm).
           bashls = { mason = false }, -- from tooling.nix
           ocamllsp = { mason = false }, -- not installed globally; needs a project shell
+          ols = { mason = false }, -- Odin, from tooling.nix
         },
       },
     },
+    -- Odin: LazyVim has no lang extra for it, so parser and formatter are set here.
+    { "nvim-treesitter/nvim-treesitter", opts = { ensure_installed = { "odin" } } },
+    { "stevearc/conform.nvim", opts = { formatters_by_ft = { odin = { "odinfmt" } } } },
   },
   defaults = {
     lazy = false,

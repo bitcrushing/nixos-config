@@ -10,6 +10,9 @@ let
     "HDMI-A-2"
   ];
   texture = "paintcrush"; # paint | crush (bitcrushed) | paintcrush | none
+  # 0 = still image. N > 0 also renders an N-frame animated GIF per monitor
+  # (costly at build time and ~36 W GPU at runtime, see wallpaper-bench.txt).
+  frames = 0;
 
   c = config.lib.stylix.colors;
   palette = map (n: c."base0${n}") [
@@ -34,10 +37,19 @@ let
     ps.numpy
     ps.pillow
   ]);
-  wallpaper = pkgs.runCommand "wallpaper-twilight-${c.slug}-${texture}" { } ''
-    ${python}/bin/python3 ${../../assets/wallpaper/generate.py} \
-      ${toString (1920 * builtins.length outputs)} 1080 $out ${texture} ${toString palette}
-  '';
+  # Cheap to render (~17 s) and machine-specific: build locally, skip cache lookups.
+  wallpaper =
+    pkgs.runCommand "wallpaper-twilight-${c.slug}-${texture}"
+      {
+        preferLocalBuild = true;
+        allowSubstitutes = false;
+      }
+      ''
+        ${python}/bin/python3 ${../../assets/wallpaper/generate.py} \
+          ${
+            toString (1920 * builtins.length outputs)
+          } 1080 $out ${texture} ${toString frames} ${toString palette}
+      '';
 
   perOutput = pkgs.lib.concatImapStringsSep " " (
     i: o: "-o ${o} -i ${wallpaper}/${toString (i - 1)}.png -m fill"

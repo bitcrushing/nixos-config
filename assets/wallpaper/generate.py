@@ -1,9 +1,12 @@
 """Twilight lake wallpaper, generated from the stylix palette.
 
-usage: generate.py WIDTH HEIGHT OUT_DIR TEXTURE base00 .. base0F
+usage: generate.py WIDTH HEIGHT OUT_DIR TEXTURE FRAMES base00 .. base0F
   TEXTURE: none | paint | crush | paintcrush
+  FRAMES:  0 for a still image; N > 0 also writes a seamless N-frame loop
+           (twinkling stars, shimmering water) as one animated GIF per monitor
 Writes OUT_DIR/full.png and one crop per 1920px-wide monitor, left to right
-(OUT_DIR/0.png, 1.png, ...). Deterministic: fixed seeds, same input -> same image.
+(OUT_DIR/0.png, 1.png, ...), plus OUT_DIR/0.gif, 1.gif ... when animated.
+Deterministic: fixed seeds, same input -> same image.
 
 Colours are picked by hue for Rosé Pine (08 love, 09 gold, 0A rose, 0B pine,
 0C foam, 0D iris), so another scheme will work but may need re-slotting.
@@ -12,8 +15,8 @@ import os, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-W, H, OUT, TEXTURE = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3], sys.argv[4]
-pal = [np.array([int(h[j:j + 2], 16) for j in (0, 2, 4)], float) / 255 for h in sys.argv[5:21]]
+W, H, OUT, TEXTURE, FRAMES = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3], sys.argv[4], int(sys.argv[5])
+pal = [np.array([int(h[j:j + 2], 16) for j in (0, 2, 4)], float) / 255 for h in sys.argv[6:22]]
 bg, surface, overlay, muted, subtle, text = pal[0], pal[1], pal[2], pal[3], pal[4], pal[5]
 love, gold, rose, pine, foam, iris = pal[8], pal[9], pal[0xA], pal[0xB], pal[0xC], pal[0xD]
 rng = np.random.default_rng(1983)
@@ -276,14 +279,19 @@ else:
 # ---------------------------------------------------------------- crisp details
 # Drawn after texturing so the brush pass doesn't smear them.
 
-def stars(img):
-    """Starfield fading out toward the glowing horizon; a few brighter ones with a soft cross."""
+def stars(img, t=None):
+    """Starfield fading out toward the glowing horizon; a few brighter ones with a soft cross.
+    With t (0..1 through the loop), about half the stars twinkle, each at its own rate."""
     srng = np.random.default_rng(77)
     n = int(W * H / 1400)
     sx = srng.uniform(0, W, n).astype(int)
     sy = (srng.uniform(0, 1, n) ** 1.6 * H * WATER * 0.8).astype(int)  # denser toward the top
     b = srng.uniform(0, 1, n) ** 3
-    for px, py, bi in zip(sx, sy, b):
+    trng = np.random.default_rng(78)  # separate stream: animation never moves or recolours stars
+    rate = trng.integers(1, 4, n)  # whole cycles per loop, so the loop is seamless
+    phase = trng.uniform(0, 1, n)
+    depth = np.where(trng.random(n) < 0.5, trng.uniform(0.35, 0.85, n), 0.0)
+    for i, (px, py, bi) in enumerate(zip(sx, sy, b)):
         sky_dark = 1 - smooth(0.25, 0.6, py / H) * (0.4 + 0.6 * np.exp(-((px / H - SUN_X) / 0.9) ** 2))
         k = bi * sky_dark
         if k < 0.04:
@@ -291,6 +299,8 @@ def stars(img):
         if np.hypot(px / H - MOON[0], py / H - MOON[1]) < 0.03:
             continue
         tint = text if srng.random() > 0.2 else foam
+        if t is not None:
+            k *= 1 - depth[i] * (0.5 + 0.5 * np.sin(2 * np.pi * (rate[i] * t + phase[i])))
         img[py, px] = np.clip(img[py, px] * (1 - k) + tint * k, 0, 1)
         if bi > 0.55:  # bright star: 4-neighbour glow
             for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
@@ -307,14 +317,19 @@ def waterline(img):
     img[row + 1] = img[row + 1] * (1 - 0.25 * glow) + line * 0.25 * glow
     return img
 
-def glints(img):
-    """Short horizontal sparkles on the water under the glow."""
+def glints(img, t=None):
+    """Short horizontal sparkles on the water under the glow. With t, each one
+    flashes on and off at its own rate."""
     grng = np.random.default_rng(91)
+    frng = np.random.default_rng(92)
     top = int(H * WATER) + 4
     for _ in range(int(W / 25)):
+        rate, phase = frng.integers(1, 5), frng.uniform(0, 1)
         x = int(grng.normal(SUN_X * H, 0.35 * H)); y = int(top + grng.uniform(0, 1) ** 2 * H * 0.2)
         if not (0 <= x < W - 8 and y < H): continue
         length = int(grng.integers(2, 7)); k = grng.uniform(0.15, 0.45) * np.exp(-((y - top) / (H * 0.12)))
+        if t is not None:
+            k *= max(0.0, np.sin(2 * np.pi * (rate * t + phase))) ** 2 * 1.6
         img[y, x:x + length] = img[y, x:x + length] * (1 - k) + (gold * 0.6 + rose * 0.4) * k
     return img
 
@@ -329,10 +344,44 @@ def moon(img):
     img[y0:y1, x0:x1] = img[y0:y1, x0:x1] * (1 - k) + (text * 0.85 + foam * 0.15) * k
     return img
 
-img = moon(glints(waterline(stars(img))))
+def shimmer(img, t):
+    """Water shimmer: shift each row of the lake sideways by a pixel or two, in
+    slow bands travelling toward the shore. Only lake pixels move; the far
+    shore, near shore and everything above stay put."""
+    out = img.copy()
+    top = int(H * WATER) + 2  # keep the waterline itself still
+    srng = np.random.default_rng(93)
+    wobble = blur(srng.random((H, 1)).repeat(4, 1), 6)[:, 0] * 2 * np.pi  # per-row phase noise
+    for yrow in range(top, H):
+        lake = region[yrow] == LAKE
+        if not lake.any():
+            continue
+        depth = (yrow - top) / (H - top)
+        amp = 0.6 + 1.8 * depth  # closer water ripples more
+        dx = int(round(amp * np.sin(2 * np.pi * (2 * t - yrow / 23.0) + wobble[yrow])))
+        if dx:
+            out[yrow, lake] = np.roll(img[yrow], dx, axis=0)[lake]
+    return out
+
+def frame(base, t=None):
+    img = base.copy() if t is None else shimmer(base, t)
+    return moon(glints(waterline(stars(img, t)), t))
 
 os.makedirs(OUT, exist_ok=True)
-out = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8))
-out.save(os.path.join(OUT, "full.png"))
-for k in range(W // 1920):
-    out.crop((k * 1920, 0, (k + 1) * 1920, H)).save(os.path.join(OUT, f"{k}.png"))
+to8 = lambda a: Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8))
+still = to8(frame(img))
+still.save(os.path.join(OUT, "full.png"))
+monitors = W // 1920
+for k in range(monitors):
+    still.crop((k * 1920, 0, (k + 1) * 1920, H)).save(os.path.join(OUT, f"{k}.png"))
+
+if FRAMES > 0:
+    # One shared palette so colours don't flicker between frames. The dithered
+    # image has only a few dozen colours, so 256 is effectively lossless.
+    shared = still.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    frames = [to8(frame(img, i / FRAMES)).quantize(palette=shared, dither=Image.Dither.NONE) for i in range(FRAMES)]
+    delay = int(os.environ.get("FRAME_MS", "80"))  # 80 ms = 12.5 fps (GIF delays are in 10 ms steps)
+    for k in range(monitors):
+        crops = [f.crop((k * 1920, 0, (k + 1) * 1920, H)) for f in frames]
+        crops[0].save(os.path.join(OUT, f"{k}.gif"), save_all=True, append_images=crops[1:],
+                      duration=delay, loop=0, disposal=1, optimize=False)

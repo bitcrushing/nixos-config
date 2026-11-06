@@ -1,6 +1,6 @@
 # Filesystems beyond hardware-configuration.nix, plus a weekly scrub.
 # Both / (nvme0n1p1) and /mnt/data (sda) are bcachefs.
-{ pkgs, ... }:
+{ ... }:
 
 {
   boot.supportedFilesystems = [ "bcachefs" ];
@@ -10,25 +10,21 @@
     fsType = "bcachefs";
   };
 
-  # Verifies checksums and corrects errors where possible; affected paths
-  # are logged to the kernel log (`journalctl -k -g bcachefs`).
-  systemd.services.bcachefs-scrub = {
-    description = "Scrub bcachefs filesystems";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = [
-        "${pkgs.bcachefs-tools}/bin/bcachefs scrub /"
-        "${pkgs.bcachefs-tools}/bin/bcachefs scrub /mnt/data"
-      ];
-      IOSchedulingClass = "idle";
-    };
+  # Weekly scrub of every bcachefs mount (checksum verification, repairs
+  # where a good copy exists); findings land in the kernel log
+  # (`journalctl -k -g bcachefs`).
+  services.bcachefs.autoScrub = {
+    enable = true;
+    interval = "weekly";
   };
 
-  systemd.timers.bcachefs-scrub = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "weekly";
-      Persistent = true; # catch up if the PC was off at the scheduled time
-    };
+  # Compressed RAM swap in front of the disk partition: absorbs pressure
+  # spikes (games, DAW work) without touching the SSD. High swappiness so
+  # the kernel actually uses it instead of dropping file cache.
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 50;
   };
+  boot.kernel.sysctl."vm.swappiness" = 180;
 }

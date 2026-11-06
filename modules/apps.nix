@@ -81,20 +81,26 @@
           }
         '';
       };
-      home.activation.vesktopSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run ${pkgs.writeShellScript "vesktop-settings" ''
-          f="$HOME/.config/vesktop/settings/settings.json"
-          mkdir -p "$(dirname "$f")"
-          [ -s "$f" ] || echo '{}' > "$f"
-          jq=${pkgs.jq}/bin/jq
-          want='.transparent == true and ((.enabledThemes // []) | index("stylix.css") != null)'
-          if ! "$jq" -e "$want" "$f" >/dev/null; then
-            "$jq" '.transparent = true
-              | .enabledThemes = ((.enabledThemes // []) - ["stylix.css"] + ["stylix.css"])' "$f" > "$f.tmp"
-            mv "$f.tmp" "$f"
-          fi
-        ''}
-      '';
+      # mkForce: home-manager's vesktop module defines this same step (as ""
+      # with immutable settings). Ours must win outright; revisit if
+      # mutableSettings is ever enabled, since upstream's merger would be
+      # discarded here too.
+      home.activation.vesktopSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+        lib.mkForce ''
+          run ${pkgs.writeShellScript "vesktop-settings" ''
+            f="$HOME/.config/vesktop/settings/settings.json"
+            mkdir -p "$(dirname "$f")"
+            [ -s "$f" ] || echo '{}' > "$f"
+            jq=${pkgs.jq}/bin/jq
+            want='.transparent == true and ((.enabledThemes // []) | index("stylix.css") != null)'
+            if ! "$jq" -e "$want" "$f" >/dev/null; then
+              "$jq" '.transparent = true
+                | .enabledThemes = ((.enabledThemes // []) - ["stylix.css"] + ["stylix.css"])' "$f" > "$f.tmp"
+              mv "$f.tmp" "$f"
+            fi
+          ''}
+        ''
+      );
 
       programs.mpv.enable = true;
       programs.obs-studio.enable = true;

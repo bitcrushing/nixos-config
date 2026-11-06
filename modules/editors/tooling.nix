@@ -20,7 +20,14 @@
     bash-language-server
     rust-analyzer
     ruff # Python lint + format
-    typescript-language-server
+    # Upstream pnpm drift at this pin: the recorded deps hash no longer
+    # matches the registry. Trust-on-first-fetch, remove on the next flake
+    # update (which should carry nixpkgs' own hash bump).
+    (typescript-language-server.overrideAttrs (old: {
+      pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
+        outputHash = "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4=";
+      });
+    }))
     prettier
     vscode-langservers-extracted # JSON/HTML/CSS
     taplo # TOML

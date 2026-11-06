@@ -1,5 +1,10 @@
 # Terminal environment: bash, CLI tools, git, ghostty.
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   # nh builds as the user with nom output, prints a diff of what changed, and
@@ -32,12 +37,15 @@
         decibels = "launch org.gnome.Decibels";
         archive = "launch file-roller";
         mixer = "launch pavucontrol";
-        bt = "launch blueman-manager";
         writer = "launch libreoffice --writer";
         calc = "launch libreoffice --calc";
         razer = "launch polychromatic-controller";
         remap = "launch input-remapper-gtk";
         discord = "launch vesktop";
+
+        # Bluetooth settings are Noctalia's control-center tab (attached
+        # panel), not a separate manager window.
+        bt = "noctalia msg panel-toggle control-center bluetooth";
       };
       initExtra = ''
         PS1='\[\033[01;34m\]\u@\h:\w\[\033[00m\]\$ '
@@ -92,11 +100,20 @@
       enableBashIntegration = true;
     };
 
-    # Colours, font family/size and opacity come from stylix.
+    # Colours and opacity come from stylix.
     programs.ghostty = {
       enable = true;
       settings = {
-        font-style = "Medium"; # DM Mono's zero is slashed by default
+        # Spleen 12x24 (installed in theme.nix), with Symbols Nerd Font Mono
+        # filling the Nerd glyphs Spleen lacks. Stylix also sets family and
+        # size, hence mkForce. 18pt is pixel-perfect: 24px em at 96 DPI.
+        font-family = lib.mkForce [
+          "Spleen 12x24"
+          "Symbols Nerd Font Mono"
+          config.stylix.fonts.emoji.name
+        ];
+        font-size = lib.mkForce 18;
+        font-style = "Medium"; # Spleen's only style
         cursor-style = "block";
         cursor-style-blink = false;
         scrollbar = "never"; # scrolling still works

@@ -1,9 +1,10 @@
-# Bluetooth, tuned for the DualSense controller.
+# Bluetooth, tuned for the DualSense controller. Pairing UI is Noctalia's
+# control-center Bluetooth tab (attached panel); blueman's applet and manager
+# window stay off so there's exactly one bluetooth UI.
 { ... }:
 
 {
   hardware.bluetooth.enable = true;
-  services.blueman.enable = true; # pairing GUI + tray applet (XDG autostart)
 
   # The DualSense connects without a classic bond, and BlueZ rejects HID from
   # non-bonded devices by default ("hidp_add_connection() Rejected connection

@@ -46,10 +46,21 @@ let
       OPENTRACK_LIB = "${pkgs.opentrack}/libexec/opentrack";
     };
   };
+
+  # Kernel 7.2.11 runs depmod for out-of-tree modules, so v4l2loopback's
+  # modules.* files collide with the kernel's during aggregateModules
+  # (nixpkgs#576406). Drop this once #575861 lands.
+  v4l2loopback = config.boot.kernelPackages.v4l2loopback.overrideAttrs (old: {
+    preBuild = "";
+    installFlags = [
+      "DEPMOD=true"
+      "INSTALL_MOD_PATH=${placeholder "out"}"
+    ];
+  });
 in
 {
   # Virtual camera the phone feed is written to.
-  boot.extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
+  boot.extraModulePackages = [ v4l2loopback ];
   boot.kernelModules = [ "v4l2loopback" ];
   boot.extraModprobeConfig = ''
     options v4l2loopback devices=1 video_nr=10 card_label="PixelCam" exclusive_caps=1
@@ -57,7 +68,8 @@ in
 
   # opentrack-proton-wine's fallback runs Proton's wine outside the Steam
   # runtime. Its binaries expect the FHS loaders: nix-ld provides the 64-bit
-  # one, and the tmpfiles rule the 32-bit one (for lib/wine/i386-unix/wine).
+  # one, and environment.ldso32 the 32-bit one (for lib/wine/i386-unix/wine).
+  # (opence.nix sets the same value for its self-updater.)
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [
@@ -77,9 +89,7 @@ in
       systemd
     ];
   };
-  systemd.tmpfiles.rules = [
-    "L /lib/ld-linux.so.2 - - - - ${pkgs.pkgsi686Linux.glibc}/lib/ld-linux.so.2"
-  ];
+  environment.ldso32 = "${pkgs.pkgsi686Linux.glibc}/lib/ld-linux.so.2";
 
   # Function form to get home-manager's lib (lib.hm.dag).
   hm =

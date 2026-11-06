@@ -49,7 +49,7 @@
   };
 
   hm.home.packages = with pkgs; [
-    pavucontrol # volume mixer (waybar click)
+    pavucontrol # volume mixer (Noctalia's volume widget opens audio settings; manual fallback)
   ];
 
   # USB autosuspend makes the 6i6 drop out.

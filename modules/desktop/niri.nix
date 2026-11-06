@@ -1,5 +1,6 @@
-# niri session: login, compositor config, wallpaper, notifications,
-# launcher and lock screen. Colours come from stylix (modules/theme.nix);
+# niri session: login, compositor config and wallpaper. The shell (bar,
+# notifications, launcher, lock screen, polkit agent) is Noctalia
+# (modules/desktop/noctalia.nix). Colours come from stylix (modules/theme.nix);
 # gaps and borders from ./style.nix.
 {
   config,
@@ -15,24 +16,66 @@ let
   inherit (style) gaps border;
 in
 {
-  # The niri module also sets up the GNOME/GTK portals, gnome-keyring,
-  # polkit and the swaylock PAM service.
+  # The niri module also sets up the GNOME/GTK portals, gnome-keyring and
+  # polkit (Noctalia registers its own agent; see noctalia.nix).
   programs.niri.enable = true;
 
-  services.greetd = {
-    enable = true;
-    settings.default_session = {
-      command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd niri-session";
-      user = "greeter";
+  # Graphical login: Noctalia greeter through greetd (replaces tuigreet).
+  # The module owns the greetd command, state dir, AccountsService and
+  # polkit; the login wallpaper lives with the image in wallpaper.nix.
+  services.displayManager = {
+    # Session files the greeter lists (nothing provided them while tuigreet
+    # launched niri-session directly).
+    sessionPackages = [ pkgs.niri ];
+    noctalia-greeter = {
+      enable = true;
+      # One-click shell -> greeter appearance sync (else every sync prompts).
+      passwordlessSyncUsers = [ "bitcrushing" ];
+      cursorTheme = {
+        package = config.stylix.cursor.package;
+        name = config.stylix.cursor.name;
+      };
+      settings = {
+        cursor.size = config.stylix.cursor.size;
+        keyboard.layout = "us"; # same as the niri xkb layout in config.kdl
+        session.default = "Niri";
+        user.default = "bitcrushing"; # straight to the password step
+        appearance = {
+          scheme = "Synced";
+          theme_mode = "dark";
+          font_family = "sans-serif"; # resolves to Jost through fontconfig
+          corner_radius_scale = 0; # square, like the rest of the desktop
+          scheme_selector_position = "hidden"; # scheme is pinned above
+          hide_logo = true; # no brand logo on the login screen
+          # Rosé Pine Moon, mirroring the shell palette in noctalia.nix
+          # (snake_case here, not the shell's m* names).
+          palette = {
+            primary = hex "base0D";
+            on_primary = hex "base00";
+            secondary = hex "base0C";
+            on_secondary = hex "base00";
+            tertiary = hex "base0A";
+            on_tertiary = hex "base00";
+            error = hex "base08";
+            on_error = hex "base00";
+            surface = hex "base00";
+            on_surface = hex "base05";
+            surface_variant = hex "base01";
+            on_surface_variant = hex "base04";
+            outline = hex "base02";
+            shadow = hex "base00";
+            hover = hex "base02";
+            on_hover = hex "base05";
+          };
+        };
+      };
     };
   };
 
   environment.systemPackages = with pkgs; [
     wl-clipboard
-    playerctl # media keys in binds.kdl
-    libnotify # notify-send (used by pi's notify-mako extension)
+    libnotify # notify-send (screenshots, pi's notify-desktop extension)
     xwayland-satellite # X11 apps; niri starts it automatically when on PATH
-    lxqt.lxqt-policykit # polkit agent; niri ships none
   ];
 
   hm = {
@@ -76,61 +119,5 @@ in
         }
       }
     '';
-
-    services.mako = {
-      enable = true;
-      settings = {
-        anchor = "top-right";
-        # outer-margin offsets the whole surface from the screen edge (so it
-        # meets a maximized window's corner); margin is padding *inside* the
-        # surface, so only use it for the gap between stacked notifications.
-        # directional: top,right,bottom,left
-        outer-margin = "${toString gaps},${toString gaps},0,0";
-        margin = "0,0,${toString gaps},0";
-        border-size = border.width;
-        border-radius = 0;
-        # stylix colours normal borders base0D and critical ones base08.
-        border-color = lib.mkForce (hex border.focused);
-        "urgency=critical".border-color = lib.mkForce (hex border.focused);
-        default-timeout = 5000;
-      };
-    };
-
-    programs.fuzzel = {
-      enable = true;
-      settings = {
-        main = {
-          prompt = ">";
-          line-height = 20;
-          inner-pad = 8;
-        };
-        border = {
-          inherit (border) width;
-          radius = 0;
-        };
-        colors.border = lib.mkForce "${colors.${border.focused}}ff"; # stylix: base0D
-      };
-    };
-
-    # stylix sets the wallpaper and colours; the overrides keep a thin ring
-    # over a clear background.
-    programs.swaylock = {
-      enable = true;
-      settings = {
-        indicator-radius = 100;
-        indicator-thickness = 4;
-        inside-color = lib.mkForce "00000000";
-        inside-clear-color = lib.mkForce "00000000";
-        inside-ver-color = lib.mkForce "00000000";
-        inside-wrong-color = lib.mkForce "00000000";
-        inside-caps-lock-color = lib.mkForce "00000000";
-        ring-color = lib.mkForce colors.base05;
-        font = config.stylix.fonts.sansSerif.name;
-        font-size = 20;
-        ignore-empty-password = true;
-        show-failed-attempts = true;
-        disable-caps-lock-text = true;
-      };
-    };
   };
 }

@@ -1,47 +1,15 @@
-# Session helpers: idle lock, volume/media OSD, clipboard history, screenshots
-# (both monitors, annotation) and a power menu. Keybindings for them are in niri/binds.kdl.
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+# Session helpers: screenshots (both monitors, annotation) and mic mute.
+# Lock/idle, the volume OSD, the launcher, clipboard UI and the power menu
+# moved to Noctalia (modules/desktop/noctalia.nix, binds in niri/binds.kdl).
+{ pkgs, ... }:
 
 let
-  c = config.lib.stylix.colors.withHashtag;
-  style = import ./style.nix;
-  swaylock = "${pkgs.swaylock}/bin/swaylock";
-  menu = prompt: "fuzzel --dmenu --prompt '${prompt} '";
-
-  power-menu = pkgs.writeShellApplication {
-    name = "power-menu";
-    runtimeInputs = [
-      pkgs.fuzzel
-      pkgs.systemd
-      pkgs.niri
-    ];
+  # Noctalia's volume keys mute output; the mic still needs a command.
+  mic-mute = pkgs.writeShellApplication {
+    name = "mic-mute";
+    runtimeInputs = [ pkgs.wireplumber ];
     text = ''
-      choice=$(printf '%s\n' Lock Suspend "Log out" Reboot "Shut down" | ${menu "power>"} --lines 5 --width 16) || exit 0
-      case "$choice" in
-        Lock) loginctl lock-session ;;
-        Suspend) systemctl suspend ;; # swayidle locks before sleep
-        "Log out") niri msg action quit --skip-confirmation ;;
-        Reboot) systemctl reboot ;;
-        "Shut down") systemctl poweroff ;;
-      esac
-    '';
-  };
-
-  clipboard-pick = pkgs.writeShellApplication {
-    name = "clipboard-pick";
-    runtimeInputs = [
-      pkgs.cliphist
-      pkgs.fuzzel
-      pkgs.wl-clipboard
-    ];
-    text = ''
-      entry=$(cliphist list | ${menu "clip>"}) || exit 0
-      cliphist decode <<<"$entry" | wl-copy
+      exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
     '';
   };
 
@@ -90,64 +58,10 @@ in
 {
   hm = {
     home.packages = [
-      power-menu
-      clipboard-pick
+      mic-mute
       screenshot-all
       annotate-screenshot
     ];
-
-    # Lock after 10 minutes idle, monitors off after 15, always lock before
-    # suspend. Apps that inhibit idle (video in Firefox/mpv, Steam while a
-    # game runs) keep this from firing.
-    services.swayidle = {
-      enable = true;
-      timeouts = [
-        {
-          timeout = 600;
-          command = "${pkgs.systemd}/bin/loginctl lock-session";
-        }
-        {
-          timeout = 900;
-          command = "${pkgs.niri}/bin/niri msg action power-off-monitors";
-        }
-      ];
-      events = {
-        lock = "${swaylock} -f";
-        before-sleep = "${swaylock} -f";
-      };
-    };
-
-    # On-screen display for volume and media keys, styled like mako.
-    services.swayosd = {
-      enable = true;
-      stylePath = pkgs.writeText "swayosd.css" ''
-        window#osd {
-          border-radius: 0;
-          border: ${toString style.border.width}px solid ${c.${style.border.focused}};
-          background: alpha(${c.base00}, ${toString config.stylix.opacity.popups});
-        }
-        window#osd #container { margin: 12px 16px; }
-        window#osd image, window#osd label { color: ${c.base05}; }
-        window#osd progressbar:disabled, window#osd image:disabled { opacity: 0.5; }
-        window#osd progressbar, window#osd segmentedprogress {
-          min-height: 4px; border-radius: 0; border: none; background: transparent;
-        }
-        window#osd trough, window#osd segment {
-          min-height: inherit; border-radius: 0; border: none; background: ${c.base02};
-        }
-        window#osd progress, window#osd segment.active {
-          min-height: inherit; border-radius: 0; border: none; background: ${c.base05};
-        }
-        window#osd segment { margin-left: 6px; }
-        window#osd segment:first-child { margin-left: 0; }
-      '';
-    };
-
-    # Clipboard history (text and images); pick with clipboard-pick.
-    services.cliphist = {
-      enable = true;
-      allowImages = true;
-    };
 
     programs.satty = {
       enable = true;

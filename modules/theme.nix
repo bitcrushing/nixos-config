@@ -5,14 +5,18 @@
 #
 # Apps without a usable stylix target read the palette themselves via
 # `config.lib.stylix.colors` (baseXX = "rrggbb", withHashtag.baseXX = "#rrggbb"):
-#   - niri borders/cursor, mako and fuzzel borders ... modules/desktop/niri.nix
-#   - waybar CSS ...................................... modules/desktop/waybar.nix
+#   - niri borders/cursor ........................... modules/desktop/niri.nix
+#   - noctalia palette (generated from these colours)  modules/desktop/noctalia.nix
 #   - pi .............................................. modules/pi/default.nix
 # Neovim uses the official Rosé Pine plugin instead (modules/editors/neovim.nix),
 # so it won't follow a scheme change here.
 #
 # Palette preview: ~/.config/stylix/palette.html
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   # Explicit list so it's obvious what stylix touches. Adding an app here
@@ -32,14 +36,10 @@ let
     "bat"
     "btop"
     "fzf"
-    "fuzzel"
     "ghostty"
-    "mako"
     "mpv"
     "spicetify"
-    "swaylock"
     "vesktop"
-    "waybar"
   ];
   enable =
     names:
@@ -85,8 +85,8 @@ in
       };
       sizes = {
         applications = 12;
-        desktop = 11; # waybar
-        popups = 12; # mako, fuzzel
+        desktop = 11;
+        popups = 12;
         terminal = 12;
       };
     };
@@ -94,8 +94,8 @@ in
     # Translucent surfaces get blurred by niri (modules/desktop/niri/config.kdl).
     opacity = {
       terminal = 0.6; # ghostty, vesktop
-      desktop = 0.65; # waybar
-      popups = 0.92; # mako, fuzzel
+      desktop = 0.65; # noctalia bar (modules/desktop/noctalia.nix)
+      popups = 0.92;
     };
   };
 
@@ -109,7 +109,8 @@ in
   hm.dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
   fonts.packages = with pkgs; [
-    nerd-fonts.symbols-only # icon fallback for waybar; Jost and DM Mono have none
+    spleen # terminal font, see modules/shell.nix
+    nerd-fonts.symbols-only # icon fallback for Jost, DM Mono and Spleen
     corefonts
     vista-fonts
   ];

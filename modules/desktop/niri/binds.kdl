@@ -3,22 +3,24 @@ binds {
   Mod+Shift+Slash { show-hotkey-overlay; }
 
   Mod+Return hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
-  Mod+Space hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
+  Mod+Space hotkey-overlay-title="Run an Application: noctalia" { spawn-sh "noctalia msg panel-toggle launcher"; }
+  Mod+S hotkey-overlay-title="Control Center" { spawn-sh "noctalia msg panel-toggle control-center"; }
+  Mod+Shift+C hotkey-overlay-title="Toggle Idle Inhibit" { spawn-sh "noctalia msg caffeine-toggle"; }
 
-  // Volume and media keys go through swayosd, which shows the level on screen
-  // (modules/desktop/tools.nix). They work even when locked.
-  XF86AudioRaiseVolume allow-when-locked=true { spawn "swayosd-client" "--output-volume" "+10" "--max-volume" "100"; }
-  XF86AudioLowerVolume allow-when-locked=true { spawn "swayosd-client" "--output-volume" "-10"; }
-  XF86AudioMute        allow-when-locked=true { spawn "swayosd-client" "--output-volume" "mute-toggle"; }
-  XF86AudioMicMute     allow-when-locked=true { spawn "swayosd-client" "--input-volume" "mute-toggle"; }
+  // Volume, media and mic keys go through Noctalia, which shows its OSD
+  // (modules/desktop/noctalia.nix). They work even when locked.
+  XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
+  XF86AudioLowerVolume allow-when-locked=true { spawn-sh "noctalia msg volume-down"; }
+  XF86AudioMute        allow-when-locked=true { spawn-sh "noctalia msg volume-mute"; }
+  XF86AudioMicMute     allow-when-locked=true { spawn "mic-mute"; }
 
-  XF86AudioPlay        allow-when-locked=true { spawn "swayosd-client" "--playerctl" "play-pause"; }
-  XF86AudioStop        allow-when-locked=true { spawn "swayosd-client" "--playerctl" "stop"; }
-  XF86AudioPrev        allow-when-locked=true { spawn "swayosd-client" "--playerctl" "prev"; }
-  XF86AudioNext        allow-when-locked=true { spawn "swayosd-client" "--playerctl" "next"; }
+  XF86AudioPlay        allow-when-locked=true { spawn-sh "noctalia msg media toggle"; }
+  XF86AudioStop        allow-when-locked=true { spawn-sh "noctalia msg media stop"; }
+  XF86AudioPrev        allow-when-locked=true { spawn-sh "noctalia msg media previous"; }
+  XF86AudioNext        allow-when-locked=true { spawn-sh "noctalia msg media next"; }
 
-  // Clipboard history and screenshot annotation (modules/desktop/tools.nix)
-  Mod+Alt+V hotkey-overlay-title="Clipboard History" { spawn "clipboard-pick"; }
+  // Clipboard history (Noctalia panel) and screenshot annotation (tools.nix)
+  Mod+Alt+V hotkey-overlay-title="Clipboard History" { spawn-sh "noctalia msg panel-toggle clipboard"; }
   Mod+Print hotkey-overlay-title="Annotate the Last Screenshot" { spawn "annotate-screenshot"; }
 
   Mod+O repeat=false { toggle-overview; }
@@ -154,13 +156,13 @@ binds {
 
   Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
-  Mod+Shift+E hotkey-overlay-title="Power Menu" { spawn "power-menu"; }
+  Mod+Shift+E hotkey-overlay-title="Power Menu" { spawn-sh "noctalia msg panel-toggle session"; }
   Ctrl+Alt+Delete { quit; }
 
   Mod+Shift+P { power-off-monitors; }
 
-  // swaylock look is set in modules/desktop/niri.nix (programs.swaylock).
-  // Goes through logind so swayidle runs the locker (one locking path for
-  // the bind, the power menu, idle and suspend).
+  // Locking goes through logind, which Noctalia handles itself (its idle
+  // manager and lock-before-suspend replace swayidle/swaylock). One locking
+  // path for the bind, the session menu, idle and suspend.
   Super+Alt+L hotkey-overlay-title="Lock the Screen" { spawn "loginctl" "lock-session"; }
 }

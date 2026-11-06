@@ -1,9 +1,8 @@
-# Shared look of the niri desktop: windows, notifications, launcher, bar.
+# Shared look of the desktop: niri windows plus the Noctalia shell.
 # Colours are base16 slot names; resolve them with config.lib.stylix.colors
-# (e.g. `colors.withHashtag.${style.border.focused}`) or as `@baseXX` in
-# waybar CSS.
+# (e.g. `colors.withHashtag.${style.border.focused}`).
 {
-  gaps = 8; # also mako's outer-margin, so notifications meet a maximized window's corner
+  gaps = 8;
   border = {
     width = 1;
     # base0F: in Rosé Pine Moon the "highlight high" grey-lavender (#56526e),

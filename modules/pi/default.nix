@@ -62,7 +62,7 @@ in
     # Loaded from ~/.pi/agent/extensions/. Node builtins only, so they run
     # straight from the store.
     home.file.".pi/agent/extensions/last-model.ts".source = ./extensions/last-model.ts;
-    home.file.".pi/agent/extensions/notify-mako.ts".source = ./extensions/notify-mako.ts;
+    home.file.".pi/agent/extensions/notify-desktop.ts".source = ./extensions/notify-desktop.ts;
 
     # Theme vars are the base16 palette; roles follow base16 conventions
     # (08 red/errors, 0A yellow/types, 0B green/strings, 0D blue/functions,

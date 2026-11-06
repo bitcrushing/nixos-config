@@ -12,7 +12,7 @@
     ./modules/storage.nix # /mnt/data + weekly bcachefs scrub
 
     ./modules/desktop/niri.nix # compositor, login, session services
-    ./modules/desktop/waybar.nix
+    ./modules/desktop/noctalia.nix # shell: bar, launcher, notifications, lock/idle, OSD
     ./modules/desktop/wallpaper.nix # generated from the palette, one image across both monitors
     ./modules/desktop/portals.nix # screencast / file picker routing
     ./modules/desktop/tools.nix # idle lock, volume OSD, clipboard history, screenshot annotation, power menu
@@ -27,6 +27,7 @@
     ./modules/audio/production.nix # DAWs, plugins, PipeASIO
 
     ./modules/gaming/steam.nix
+    ./modules/gaming/opence.nix # Halo CE (OpenCE), 32-bit release
     ./modules/gaming/headtracking.nix # opentrack + phone camera for Nuclear Option
 
     ./modules/editors/neovim.nix
@@ -52,11 +53,15 @@
   };
   systemd.services.nix-gc.preStart = "${config.nix.package}/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +5";
 
+  # Kill runaway memory hogs early; the kernel's own OOM handling freezes
+  # the desktop for a long time instead.
+  services.earlyoom.enable = true;
+
   # ─── Boot ───────────────────────────────────────────────────
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 5;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_zen; # Zen: lower latency for games/audio (1000Hz, preempt)
   boot.tmp.cleanOnBoot = true; # /tmp is on the root disk, so it would otherwise never empty
 
   # ─── System ─────────────────────────────────────────────────

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=OpenCE (Halo: Combat Evolved)
+Comment=Open source port of Halo: Combat Evolved
+Exec=opence
+Icon=opence
+Categories=Game;
+Terminal=false

@@ -1,4 +1,5 @@
-# Shared look of the desktop: niri windows plus the Noctalia shell.
+# Shared niri layout: gaps and window-border colours. Noctalia's square
+# corners and translucency come from stylix and noctalia.nix.
 # Colours are base16 slot names; resolve them with config.lib.stylix.colors
 # (e.g. `colors.withHashtag.${style.border.focused}`).
 {

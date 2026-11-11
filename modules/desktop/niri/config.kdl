@@ -69,7 +69,6 @@ blur {
 }
 window-rule {
   match app-id=r#"^com\.mitchellh\.ghostty$"#
-  match app-id="^vesktop$"
   background-effect {
     blur true
   }

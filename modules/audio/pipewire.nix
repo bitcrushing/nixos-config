@@ -2,6 +2,17 @@
 # the Focusrite Scarlett 6i6.
 { lib, pkgs, ... }:
 
+let
+  # Noctalia's volume keys mute output; the mic still needs a command
+  # (bound to XF86AudioMicMute in niri/binds.kdl).
+  mic-mute = pkgs.writeShellApplication {
+    name = "mic-mute";
+    runtimeInputs = [ pkgs.wireplumber ];
+    text = ''
+      exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+    '';
+  };
+in
 {
   security.rtkit.enable = true;
 
@@ -23,7 +34,10 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    jack.enable = true;
+    # JACK clients use PipeWire through the `pw-jack` wrapper from
+    # pkgs.pipewire.jack (Renoise is wrapped in pkgs/renoise). Enabling
+    # services.pipewire.jack would export a global LD_LIBRARY_PATH and is
+    # deprecated.
     wireplumber.enable = true;
 
     # Fixed 48 kHz / 256 frames. Browsers, games and video are 48k-native;
@@ -50,6 +64,7 @@
 
   hm.home.packages = with pkgs; [
     pavucontrol # volume mixer (Noctalia's volume widget opens audio settings; manual fallback)
+    mic-mute # XF86AudioMicMute
   ];
 
   # USB autosuspend makes the 6i6 drop out.

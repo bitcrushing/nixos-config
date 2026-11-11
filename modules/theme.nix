@@ -1,13 +1,13 @@
 # System-wide look: stylix applies one base16 colour scheme, fonts, cursor,
 # icons and the wallpaper (modules/desktop/wallpaper.nix) to the targets
-# listed below. Firefox follows the
-# GTK theme.
+# listed below. Firefox follows the GTK theme.
 #
 # Apps without a usable stylix target read the palette themselves via
 # `config.lib.stylix.colors` (baseXX = "rrggbb", withHashtag.baseXX = "#rrggbb"):
 #   - niri borders/cursor ........................... modules/desktop/niri.nix
 #   - noctalia palette (generated from these colours)  modules/desktop/noctalia.nix
 #   - pi .............................................. modules/pi/default.nix
+# Terminal font fallbacks live in modules/shell/ghostty.nix.
 # Neovim uses the official Rosé Pine plugin instead (modules/editors/neovim.nix),
 # so it won't follow a scheme change here.
 #
@@ -80,20 +80,22 @@ in
         name = "Jost*"; # the asterisk is part of the family name
       };
       monospace = {
-        package = pkgs.dm-mono;
-        name = "DM Mono";
+        package = pkgs.fira-mono;
+        name = "Fira Mono";
       };
       sizes = {
         applications = 12;
         desktop = 11;
         popups = 12;
-        terminal = 12;
+        # 13.5pt = 18px at Ghostty's 96 DPI, the size used for the font
+        # comparison.
+        terminal = 13.5;
       };
     };
 
     # Translucent surfaces get blurred by niri (modules/desktop/niri/config.kdl).
     opacity = {
-      terminal = 0.6; # ghostty, vesktop
+      terminal = 0.6; # ghostty
       desktop = 0.65; # noctalia bar (modules/desktop/noctalia.nix)
       popups = 0.92;
     };
@@ -108,9 +110,10 @@ in
   # libadwaita and Electron apps. (stylix only sets it in its GNOME target.)
   hm.dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
+  # Fira Mono is installed by the stylix font-packages target
+  # (fonts.monospace above); this list is for faces stylix doesn't own.
   fonts.packages = with pkgs; [
-    spleen # terminal font, see modules/shell.nix
-    nerd-fonts.symbols-only # icon fallback for Jost, DM Mono and Spleen
+    nerd-fonts.symbols-only # Nerd glyph fallback for Jost and Fira Mono
     corefonts
     vista-fonts
   ];

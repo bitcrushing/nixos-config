@@ -1,6 +1,7 @@
 # Desktop shell: bar, launcher, notifications, clipboard history, session
-# menu, lock screen + idle handling, volume OSD and polkit agent. Replaces
-# waybar, mako, fuzzel, swaylock, swayidle and swayosd (all retired).
+# menu, lock screen + idle handling, volume OSD and polkit agent. This replaces
+# the old waybar/mako/fuzzel/swaylock/swayidle/swayosd stack; don't add those
+# back.
 # Keybindings that drive it live in niri/binds.kdl (`noctalia msg ...`).
 #
 # These settings are the Nix-owned base layer (~/.config/noctalia/config.toml,
@@ -14,7 +15,7 @@ in
 {
   hm.programs.noctalia = {
     enable = true;
-    systemd.enable = true; # same autostart mechanism waybar used
+    systemd.enable = true; # start with the graphical session
 
     settings = {
       theme = {
@@ -49,17 +50,17 @@ in
       # visible at 2x speed. Motion off: panels pop in/out instantly.
       shell.animation.enabled = false;
 
-      # Not a waybar mirror: workspaces left, clock centre, and a small
-      # status group right. The bell opens notification history (mako never
-      # had any); control-center consolidates wifi/bluetooth/audio/settings.
-      # CPU/RAM text was dropped on purpose — both live in the control
-      # center and system monitor; add "cpu" and "ram" back to `end` below
-      # if you miss the at-a-glance numbers. Full-width (margin_ends = 0)
-      # with square corners (radius = 0); translucency follows stylix.
+      # Workspaces left, clock centre, and a small status group right. The
+      # bell opens notification history; control-center consolidates
+      # wifi/bluetooth/audio/settings. CPU/RAM text was dropped on purpose —
+      # both live in the control center and system monitor; add "cpu" and
+      # "ram" back to `end` below if you miss the at-a-glance numbers.
+      # Full-width (margin_ends = 0) with square corners (radius = 0);
+      # translucency follows stylix.
       bar.default = {
         position = "top";
         reserve_space = true;
-        thickness = 28; # matches the old waybar height
+        thickness = 28;
         margin_ends = 0;
         background_opacity = config.stylix.opacity.desktop;
         radius = 0;
@@ -82,8 +83,8 @@ in
       # overflows its column ("Wednesday 14 Octo…").
       calendar.event_date_format = "%a %e %b";
 
-      # Replaces swayidle: lock after 10 minutes, monitors off after 15.
-      # Suspend locking is built in (lockscreen.lock_before_suspend).
+      # Lock after 10 minutes, monitors off after 15. Suspend locking is
+      # built in (lockscreen.lock_before_suspend).
       idle.behavior = {
         lock = {
           timeout = 600;
@@ -97,7 +98,7 @@ in
         };
       };
 
-      # swaylock ignored empty passwords; keep that behaviour.
+      # Allow locking with an empty password, like the previous lock screen.
       lockscreen.allow_empty_password = true;
     };
 

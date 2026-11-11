@@ -9,6 +9,13 @@ let
     "ladspa"
     "dssi"
   ];
+
+  # Expose only pw-jack: the pipewire.jack output also contains libjack.so.0,
+  # which conflicts with Renoise's own $out/lib/libjack.so.0 when both are
+  # top-level paths in the home-manager buildEnv.
+  pw-jack = pkgs.writeShellScriptBin "pw-jack" ''
+    exec ${pkgs.pipewire.jack}/bin/pw-jack "$@"
+  '';
 in
 {
   # Link plugin dirs into the system and per-user profiles, and point DAWs
@@ -32,8 +39,9 @@ in
     { lib, ... }:
     {
       home.packages = with pkgs; [
-        renoise # full version via pkgs/renoise
+        renoise # full version via pkgs/renoise; wrapped with pw-jack
         pipeasio
+        pw-jack # for starting other JACK clients on PipeWire
       ];
 
       # Wine/Proton only load PipeASIO's unix .so from a path the Proton

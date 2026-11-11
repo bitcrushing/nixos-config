@@ -12,6 +12,13 @@
       initLua = builtins.readFile ./neovim/init.lua;
     };
 
+    # Keep the editor choice in one place: the module that provides nvim also
+    # exports the variables other programs use.
+    home.sessionVariables = {
+      VISUAL = "nvim";
+      SUDO_EDITOR = "nvim";
+    };
+
     xdg.desktopEntries.Neovim = {
       name = "Neovim";
       genericName = "Text Editor";

@@ -24,7 +24,7 @@
     description = "Send the Magicforce numpad the NumLock LED report niri misses";
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
-      ExecStart = "${pkgs.python3}/bin/python3 ${./numpad-led-responder.py}";
+      ExecStart = "${pkgs.python3}/bin/python3 ${./numpad/led-responder.py}";
       Restart = "always";
       RestartSec = 2;
       # Runs as root: needs the evdev and hidraw nodes (both 0600).

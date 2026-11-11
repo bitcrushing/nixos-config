@@ -19,7 +19,7 @@ binds {
   XF86AudioPrev        allow-when-locked=true { spawn-sh "noctalia msg media previous"; }
   XF86AudioNext        allow-when-locked=true { spawn-sh "noctalia msg media next"; }
 
-  // Clipboard history (Noctalia panel) and screenshot annotation (tools.nix)
+  // Clipboard history (Noctalia panel) and screenshot annotation (screenshots.nix)
   Mod+Alt+V hotkey-overlay-title="Clipboard History" { spawn-sh "noctalia msg panel-toggle clipboard"; }
   Mod+Print hotkey-overlay-title="Annotate the Last Screenshot" { spawn "annotate-screenshot"; }
 

@@ -1,8 +1,12 @@
 # nixpkgs' renoise builds the demo unless given the full release tarball,
 # which can't be downloaded without a licence. Look for it in installers/.
+# Renoise links libjack2; wrap it with pw-jack so JACK clients use PipeWire
+# without the deprecated global services.pipewire.jack LD_LIBRARY_PATH.
 {
   lib,
   stdenv,
+  makeWrapper,
+  pipewire,
   renoise,
 }:
 
@@ -25,4 +29,14 @@ if installer == null then
       git add -N -f installers/${expected}
   ''
 else
-  renoise.override { releasePath = installer; }
+  let
+    base = renoise.override { releasePath = installer; };
+  in
+  base.overrideAttrs (old: {
+    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ makeWrapper ];
+    postFixup = (old.postFixup or "") + ''
+      mv $out/bin/renoise $out/bin/renoise-real
+      makeWrapper ${pipewire.jack}/bin/pw-jack $out/bin/renoise \
+        --add-flags $out/bin/renoise-real
+    '';
+  })

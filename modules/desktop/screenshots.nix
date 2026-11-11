@@ -1,18 +1,9 @@
-# Session helpers: screenshots (both monitors, annotation) and mic mute.
-# Lock/idle, the volume OSD, the launcher, clipboard UI and the power menu
-# moved to Noctalia (modules/desktop/noctalia.nix, binds in niri/binds.kdl).
+# Screenshot helpers: whole-layout capture and annotation. niri's built-in
+# Print binds are in niri/binds.kdl; lock/idle, OSD, launcher, clipboard and
+# power menu are Noctalia (modules/desktop/noctalia.nix).
 { pkgs, ... }:
 
 let
-  # Noctalia's volume keys mute output; the mic still needs a command.
-  mic-mute = pkgs.writeShellApplication {
-    name = "mic-mute";
-    runtimeInputs = [ pkgs.wireplumber ];
-    text = ''
-      exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
-    '';
-  };
-
   # niri's screenshot actions only capture one monitor; grim captures the whole
   # layout (both monitors, 3840x1080) into one image. Same folder and naming as
   # niri's screenshots, so annotate-screenshot picks it up too.
@@ -58,7 +49,6 @@ in
 {
   hm = {
     home.packages = [
-      mic-mute
       screenshot-all
       annotate-screenshot
     ];

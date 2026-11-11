@@ -1,93 +1,55 @@
-# Host-wide basics. Everything else lives in a topic module under modules/;
-# the imports list below is the table of contents.
-{ config, pkgs, ... }:
+# Host entry point. This file is the table of contents: every module is
+# listed explicitly (there is no auto-import) and settings live in modules/.
+# Only the state versions stay here because they belong to the host itself.
+{ ... }:
 
 {
   imports = [
     ./hardware-configuration.nix
 
-    ./modules/theme.nix # stylix: colours, fonts, cursor, icons, wallpaper
-    ./modules/shell.nix # bash, CLI tools, git, ghostty
-    ./modules/apps.nix # GUI apps without their own module
-    ./modules/storage.nix # /mnt/data + weekly bcachefs scrub
+    # System
+    ./modules/system/boot.nix
+    ./modules/system/base.nix
+    ./modules/system/nix.nix
+    ./modules/system/storage.nix
 
-    ./modules/desktop/niri.nix # compositor, login, session services
-    ./modules/desktop/noctalia.nix # shell: bar, launcher, notifications, lock/idle, OSD
-    ./modules/desktop/wallpaper.nix # generated from the palette, one image across both monitors
-    ./modules/desktop/portals.nix # screencast / file picker routing
-    ./modules/desktop/tools.nix # idle lock, volume OSD, clipboard history, screenshot annotation, power menu
+    # Look and terminal
+    ./modules/theme.nix
+    ./modules/shell/bash.nix
+    ./modules/shell/cli.nix
+    ./modules/shell/ghostty.nix
 
+    # Desktop
+    ./modules/apps/default.nix
+    ./modules/apps/vesktop.nix
+    ./modules/desktop/niri.nix
+    ./modules/desktop/noctalia.nix
+    ./modules/desktop/wallpaper.nix
+    ./modules/desktop/portals.nix
+    ./modules/desktop/screenshots.nix
+
+    # Hardware
     ./modules/hardware/bluetooth.nix
-    ./modules/hardware/numpad.nix # Magicforce numpad NumLock workaround
-    ./modules/hardware/drawing-keypad.nix # kanata Krita keypad on the numpad + mouse thumb buttons
-    ./modules/hardware/peripherals.nix # Razer mouse, input-remapper
+    ./modules/hardware/numpad.nix
+    ./modules/hardware/drawing-keypad.nix
+    ./modules/hardware/peripherals.nix
     ./modules/hardware/printing.nix
 
-    ./modules/audio/pipewire.nix # low-latency PipeWire, Scarlett 6i6
-    ./modules/audio/production.nix # DAWs, plugins, PipeASIO
+    # Audio
+    ./modules/audio/pipewire.nix
+    ./modules/audio/production.nix
 
+    # Gaming
+    ./modules/gaming/compat.nix
     ./modules/gaming/steam.nix
-    ./modules/gaming/opence.nix # Halo CE (OpenCE), 32-bit release
-    ./modules/gaming/headtracking.nix # opentrack + phone camera for Nuclear Option
+    ./modules/gaming/opence.nix
+    ./modules/gaming/headtracking.nix
 
+    # Editors and tools
     ./modules/editors/neovim.nix
-    ./modules/editors/tooling.nix # LSPs, formatters, dev tools
-
-    ./modules/pi # pi coding agent
+    ./modules/editors/tooling.nix
+    ./modules/pi/default.nix
   ];
-
-  nixpkgs.overlays = [ (import ./pkgs) ];
-  nixpkgs.config.allowUnfree = true;
-
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-  nix.settings.auto-optimise-store = true; # hard-link identical files in the store
-
-  # Housekeeping: weekly, keep the 5 newest system generations and delete
-  # everything no longer referenced. The boot menu lists at most 5.
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-  };
-  systemd.services.nix-gc.preStart = "${config.nix.package}/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +5";
-
-  # Kill runaway memory hogs early; the kernel's own OOM handling freezes
-  # the desktop for a long time instead.
-  services.earlyoom.enable = true;
-
-  # ─── Boot ───────────────────────────────────────────────────
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.systemd-boot.configurationLimit = 5;
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = pkgs.linuxPackages_zen; # Zen: lower latency for games/audio (1000Hz, preempt)
-  boot.tmp.cleanOnBoot = true; # /tmp is on the root disk, so it would otherwise never empty
-
-  # ─── System ─────────────────────────────────────────────────
-  networking.hostName = "PC";
-  networking.networkmanager.enable = true;
-  time.timeZone = "Europe/Dublin";
-
-  users.users.bitcrushing = {
-    isNormalUser = true;
-    extraGroups = [
-      "wheel"
-      "networkmanager"
-      "audio"
-    ];
-  };
-
-  security.sudo.extraConfig = ''
-    Defaults env_editor
-  '';
-
-  # Process priority rules (CachyOS ruleset).
-  services.ananicy = {
-    enable = true;
-    package = pkgs.ananicy-cpp;
-    rulesProvider = pkgs.ananicy-rules-cachyos;
-  };
 
   # Never change these after install; they are not the NixOS version.
   system.stateVersion = "26.05";

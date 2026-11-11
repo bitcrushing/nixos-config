@@ -6,7 +6,6 @@
 # Scripts are in ./headtracking/.
 {
   config,
-  lib,
   pkgs,
   ...
 }:
@@ -66,30 +65,8 @@ in
     options v4l2loopback devices=1 video_nr=10 card_label="PixelCam" exclusive_caps=1
   '';
 
-  # opentrack-proton-wine's fallback runs Proton's wine outside the Steam
-  # runtime. Its binaries expect the FHS loaders: nix-ld provides the 64-bit
-  # one, and environment.ldso32 the 32-bit one (for lib/wine/i386-unix/wine).
-  # (opence.nix sets the same value for its self-updater.)
-  programs.nix-ld = {
-    enable = true;
-    libraries = with pkgs; [
-      zlib
-      zstd
-      stdenv.cc.cc
-      curl
-      openssl
-      attr
-      libssh
-      bzip2
-      libxml2
-      acl
-      libsodium
-      util-linux
-      xz
-      systemd
-    ];
-  };
-  environment.ldso32 = "${pkgs.pkgsi686Linux.glibc}/lib/ld-linux.so.2";
+  # opentrack-proton-wine's FHS loader and nix-ld dependencies live in
+  # compat.nix, together with the 32-bit loader used by OpenCE.
 
   # Function form to get home-manager's lib (lib.hm.dag).
   hm =

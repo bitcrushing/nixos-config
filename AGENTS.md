@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Personal NixOS + home-manager flake for one machine (hostname `PC`, user `bitcrushing`). No test suite or CI: building the system is the verification.
+Personal NixOS + home-manager flake for one machine (hostname `PC`, user `bitcrushing`). No test suite or CI: building the system is the verification. Read `DESIGN.md` before adding or moving a module.
 
 ## Commands
 
@@ -16,17 +16,26 @@ New files must be tracked by git (`git add` or `git add -N`) before the flake ca
 
 ## Layout
 
-- `configuration.nix`: host basics plus the **imports list, which is the table of contents**. Every module is listed there explicitly; there is no auto-import.
-- `modules/<topic>.nix` or `modules/<topic>/*.nix`: one topic per file, holding both the NixOS and the home-manager settings for it.
-- Non-Nix config lives in real files next to its module (`niri/*.kdl`, `neovim/init.lua`, `headtracking/*.sh`, `numpad-led-responder.py`, `pi/extensions/*.ts`) and is pulled in with `source =` / `builtins.readFile`. Keep it that way; don't inline other languages as Nix strings.
-- `pkgs/`: local packages, exposed through the overlay in `pkgs/default.nix` as `pkgs.pipeasio` and `pkgs.renoise` (full version from `installers/`).
+`DESIGN.md` is the source of truth for the layout and the "where does this
+change go?" table. In short:
+
+- `configuration.nix`: the imports list is the **table of contents**, plus the two `stateVersion` values. Every module is listed there explicitly; there is no auto-import.
+- `modules/system/`: boot, host identity/services, Nix settings/GC, storage.
+- `modules/theme.nix`: cross-cutting stylix config (palette, fonts, cursor, icons, opacity).
+- `modules/shell/`: interactive bash, CLI tools/git/nh, Ghostty.
+- `modules/apps/`: GUI apps. `default.nix` holds simple apps; a program with substantial custom config gets its own file.
+- `modules/desktop/`: niri, Noctalia, wallpaper, portals, screenshots, shared style.
+- `modules/{hardware,audio,gaming,editors,pi}/`: domain modules.
+- Non-Nix config lives in real files next to its module (`niri/*.kdl`, `neovim/init.lua`, `headtracking/*.sh`, `numpad/led-responder.py`, `pi/extensions/*.ts`) and is pulled in with `source =` / `builtins.readFile`. Keep it that way; don't inline other languages as Nix strings.
+- `pkgs/`: local packages only, exposed through the overlay in `pkgs/default.nix` as `pkgs.pipeasio`, `pkgs.renoise`, etc. Nixpkgs workarounds live with the module that needs them (e.g. `modules/gaming/compat.nix`).
 - `assets/wallpaper/generate.py`: the wallpaper generator (Python/numpy), run at build time by `modules/desktop/wallpaper.nix` with the stylix palette. It renders one wide image and splits it per monitor.
 
 ## Conventions
 
 - Home-manager options are written as `hm.<option>` (an alias for `home-manager.users.bitcrushing`, defined in `flake.nix`). A module that needs home-manager's `lib.hm` (e.g. `lib.hm.dag` for activation scripts) uses the function form `hm = { lib, ... }: { ... };`.
-- Theming is stylix (`modules/theme.nix`) with `autoEnable = false`: the targets are listed explicitly there. Anything stylix can't theme reads colours from `config.lib.stylix.colors` (see the header of `theme.nix`). Never hardcode hex colours.
-- Desktop geometry and border colours (gaps, border width, focused/unfocused slot) live in `modules/desktop/style.nix` and are shared by niri, mako, fuzzel and waybar. Change them there, not per app.
+- Theming is stylix (`modules/theme.nix`) with `autoEnable = false`: the targets are listed explicitly there. Anything stylix can't theme reads colours from `config.lib.stylix.colors` (see the header of `theme.nix`). Never hardcode hex colours. The monospace/terminal font is chosen once in `theme.nix`; Ghostty only adds Nerd Font/emoji fallbacks.
+- Desktop geometry and border colours (gaps, border width, focused/unfocused slot) live in `modules/desktop/style.nix` and are used by niri. Change them there, not per app.
+- The desktop shell is Noctalia (bar, launcher, notifications, clipboard, lock/idle, OSD, power menu). Don't add waybar, mako, fuzzel, swaylock, swayidle or swayosd back; extend Noctalia or call it with `noctalia msg ...`.
 - Default apps: `~/.config/mimeapps.list` is app-managed (Firefox, Nautilus write to it), so defaults are set with `xdg-mime default <app>.desktop <types>`, not from Nix.
 - Comments explain *why* (hardware quirks, upstream bugs, workarounds) and say when a workaround can be removed. Keep them short and keep them true: if a change makes a comment wrong, fix or delete it.
 

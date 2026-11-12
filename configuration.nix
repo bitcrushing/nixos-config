@@ -12,6 +12,7 @@
     ./modules/system/base.nix
     ./modules/system/nix.nix
     ./modules/system/storage.nix
+    ./modules/system/tailscale.nix
 
     # Look and terminal
     ./modules/theme.nix
@@ -21,9 +22,12 @@
 
     # Desktop
     ./modules/apps/default.nix
+    ./modules/apps/filebrowser.nix
+    ./modules/apps/qbittorrent.nix
     ./modules/apps/vesktop.nix
     ./modules/desktop/niri.nix
     ./modules/desktop/noctalia.nix
+    ./modules/desktop/wayvnc.nix
     ./modules/desktop/wallpaper.nix
     ./modules/desktop/portals.nix
     ./modules/desktop/screenshots.nix

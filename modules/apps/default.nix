@@ -23,7 +23,6 @@
         ffmpegthumbnailer # video thumbnails in Nautilus
         libreoffice
         krita
-        qbittorrent
         syncplay
         opencode
       ];

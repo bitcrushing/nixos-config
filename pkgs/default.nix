@@ -4,6 +4,7 @@
 final: prev: {
   pipeasio = final.callPackage ./pipeasio { };
   twilight-wallpaper = final.callPackage ./twilight-wallpaper { };
+  wl-uinput-proxy = final.callPackage ./wl-uinput-proxy { };
   # Official 32-bit release binary; see pkgs/opence.
   opence = final.pkgsi686Linux.callPackage ./opence { };
   # Full Renoise, built from the licensed tarball in installers/.

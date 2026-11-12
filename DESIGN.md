@@ -63,6 +63,7 @@ modules/
     base.nix                   hostname, network, timezone, users, sudo, services
     nix.nix                    package overlay, flakes, store optimisation, GC
     storage.nix                extra filesystems, scrub, zram
+    tailscale.nix              Tailscale VPN and Tailscale SSH
   theme.nix                    stylix: palette, fonts, cursor, icons, opacity
   shell/
     bash.nix                   interactive bash: prompt, aliases, helpers
@@ -70,12 +71,15 @@ modules/
     ghostty.nix                terminal font fallbacks and behaviour
   apps/
     default.nix                GUI apps without substantial custom config
+    filebrowser.nix            web file manager on :8081
+    qbittorrent.nix            qbittorrent-nox user service (headless Web UI)
     vesktop.nix                Vesktop theme and window transparency
   desktop/
     niri.nix                   compositor, login, session services, generated nix.kdl
     niri/config.kdl            hand-written niri configuration
     niri/binds.kdl             keybindings
     noctalia.nix               bar, launcher, notifications, lock/idle, OSD
+    wayvnc.nix                 remote desktop over the tailnet
     wallpaper.nix              generated wallpaper + renderer service
     portals.nix                xdg-desktop-portal routing
     screenshots.nix            whole-layout capture and annotation helpers
@@ -117,12 +121,15 @@ installers/                    licensed Renoise tarball; never committed
 | Hostname, network, timezone, users, sudo, always-on services | `modules/system/base.nix` |
 | Nix settings, GC, package overlay, unfree packages | `modules/system/nix.nix` |
 | Filesystems, scrub, zram | `modules/system/storage.nix` |
+| Tailscale VPN or SSH access | `modules/system/tailscale.nix` |
 | Colours, fonts, cursor, icons, opacity | `modules/theme.nix` |
 | Prompt, aliases, shell helper functions | `modules/shell/bash.nix` |
 | CLI packages, git, nh, file/text tools | `modules/shell/cli.nix` |
 | Terminal appearance or font fallback | `modules/shell/ghostty.nix` |
 | GUI app with no custom config | `modules/apps/default.nix` |
 | GUI app with substantial custom config | `modules/apps/<app>.nix` |
+| Web file manager | `modules/apps/filebrowser.nix` |
+| Remote desktop (VNC) | `modules/desktop/wayvnc.nix` |
 | niri behaviour | `modules/desktop/niri/config.kdl` |
 | niri keybinding | `modules/desktop/niri/binds.kdl` |
 | Generated/coloured niri settings | `modules/desktop/niri.nix` |
